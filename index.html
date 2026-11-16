@@ -230,6 +230,16 @@
   }
   #photobtn svg { width: 55%; height: 55%; }
   body.entered #photobtn { display: flex; }
+  body.gamepad.entered #kindbtn { display: flex; }
+  .gamepad-shortcut {
+    display: none; position: absolute; top: 50%; transform: translateY(-50%);
+    padding: 3px 6px; border: 1px solid var(--glass-edge); border-radius: 5px;
+    background: var(--ink); color: var(--paper); font: 700 11px var(--font-body);
+    white-space: nowrap; pointer-events: none;
+  }
+  body.gamepad.entered .gamepad-shortcut { display: block; }
+  #photobtn .gamepad-shortcut { left: calc(100% + 6px); }
+  #kindbtn .gamepad-shortcut { right: calc(100% + 6px); }
   #flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 6; transition: opacity .4s; }
   #flash.on { opacity: .8; transition: none; }
   #photo, #leave { position: fixed; inset: 0; z-index: 7; display: flex; align-items: center; justify-content: center; background: rgba(11,26,32,.55); padding: 16px; box-sizing: border-box; }
@@ -239,6 +249,7 @@
   #photo .row2, #leave .row2 { display: flex; gap: 8px; }
   #photo .row2 button, #leave .row2 button { flex: 1; font: 700 15px var(--font-body); border-radius: 10px; padding: 11px 12px; border: 0; cursor: pointer; background: var(--sun); color: var(--ink); }
   #photo .row2 button.ghost, #leave .row2 button.ghost { background: transparent; color: var(--paper); border: 1px solid var(--glass-edge); }
+  #photo .gamepad-shortcut { position: static; transform: none; margin: 5px auto 0; width: max-content; }
   #photo .row2 button[hidden] { display: none; }
   #photo-share[hidden] + #photo-save { background: var(--sun); color: var(--ink); border: 0; } /* without a share sheet, Save is the main action */
   #leave .sheet { width: min(400px, 100%); padding: 18px 18px 12px; }
@@ -257,9 +268,6 @@
   body.touch.entered #bagbtn { display: flex; }
   body.touch #log { font-size: 12px; width: min(260px, calc(100vw - 130px)); max-height: 15vh; line-height: 1.3; }
   body.touch #card .fish { font-size: 30px; }
-  .keys-touch { display: none; }
-  body.touch .keys-desktop { display: none; }
-  body.touch .keys-touch { display: grid; }
   body.touch #prompt { font-size: 14px; padding: 9px 14px; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); left: 16px; right: auto; transform: none; max-width: calc(100vw - 120px); }
   body.touch #log { bottom: calc(66px + env(safe-area-inset-bottom, 0px)); padding: 6px 10px; }
 
@@ -289,6 +297,11 @@
   .wcard .row input { flex: 1; min-width: 140px; font: inherit; font-size: 16px; color: var(--paper); background: rgba(255,255,255,.07); border: 1px solid var(--glass-edge); border-radius: 10px; padding: 10px 12px; outline: none; }
   .wcard .row input:focus { border-color: var(--sun); }
   .wcard .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 13px; color: var(--drift); margin-bottom: 20px; }
+  .wcard .control-title { font-size: 14px; margin: 0 0 8px; color: var(--paper); }
+  .wcard .control-note { font-size: 13px; margin-bottom: 8px; }
+  .wcard .keys-touch, .wcard .touch-title { display: none; }
+  body.touch .wcard .keys-touch { display: grid; }
+  body.touch .wcard .touch-title { display: block; }
   .wcard .keys kbd { font: 700 12px var(--font-body); background: rgba(251,245,234,.12); border: 1px solid var(--glass-edge); border-radius: 5px; padding: 1px 6px; color: var(--paper); }
   .wcard button, #castbtn, #kindbtn { cursor: pointer; }
   .wcard button {
@@ -365,17 +378,18 @@
   </div>
 
   <button id="castbtn" type="button">Cast</button>
-  <button id="kindbtn" type="button" aria-label="Say something kind">Kind<br>word</button>
+  <button id="kindbtn" type="button" aria-label="Say something kind">Kind<br>word<kbd id="kind-shortcut" class="gamepad-shortcut" aria-hidden="true"></kbd></button>
   <button id="photobtn" type="button" aria-label="Take a photo" title="Take a photo (P)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.6"/></svg>
+    <kbd id="photo-shortcut" class="gamepad-shortcut" aria-hidden="true"></kbd>
   </button>
 </div>
 <div id="flash"></div>
 <div id="photo" hidden>
   <div class="sheet glass" role="dialog" aria-label="Your photo">
     <img id="photo-img" alt="Your photo from Stillwater Lake">
-    <div class="row2"><button id="photo-share" type="button">Share</button><button id="photo-save" type="button" class="ghost">Save</button><button id="photo-close" type="button" class="ghost">Close</button></div>
-    <p class="hint" id="photo-hint"></p>
+    <div class="row2"><button id="photo-share" type="button">Share<kbd id="photo-share-shortcut" class="gamepad-shortcut" aria-hidden="true"></kbd></button><button id="photo-save" type="button" class="ghost">Save<kbd id="photo-save-shortcut" class="gamepad-shortcut" aria-hidden="true"></kbd></button><button id="photo-close" type="button" class="ghost">Close<kbd id="photo-close-shortcut" class="gamepad-shortcut" aria-hidden="true"></kbd></button></div>
+    <p class="hint" id="photo-hint" role="status"></p>
   </div>
 </div>
 <div id="leave" hidden>
@@ -401,7 +415,21 @@
       <button id="inapp-cont" class="cont" type="button">Continue here anyway</button>
     </div>
     <form id="wname-form" class="row"><input id="wname" maxlength="18" placeholder="Your name" autocomplete="off" spellcheck="false" enterkeyhint="go"></form>
-    <div class="keys keys-desktop">
+    <h3 class="control-title">Gamepad controls</h3>
+    <p class="control-note">Pair via Bluetooth and press a button with this tab focused.</p>
+    <div class="keys">
+      <span>Welcome</span><span>Either stick or D-pad up/down to scroll. <kbd>A / ×</kbd> enters the lake.</span>
+      <span>Left stick</span><span>Look around and tilt the camera</span>
+      <span>Right stick</span><span>Walk forward and back, turn left and right</span>
+      <span><kbd>RB / R1</kbd></span><span>Hold to run</span>
+      <span><kbd>A / ×</kbd></span><span>Cast or reel</span>
+      <span><kbd>X / □</kbd></span><span>Pick up a branch or stone, or eat</span>
+      <span><kbd>Y / △</kbd></span><span>Build a campfire</span>
+      <span><kbd>B / ○</kbd></span><span>Grill a fish, or close a panel</span>
+      <span><kbd>↑</kbd> <kbd>←</kbd> <kbd>→</kbd></span><span>Say a kind word, dance, take a photo</span>
+    </div>
+    <h3 class="control-title">Keyboard and mouse controls</h3>
+    <div class="keys">
       <span><kbd>W</kbd><kbd>S</kbd></span><span>walk forward and back, hold <kbd>Shift</kbd> to run</span>
       <span><kbd>A</kbd><kbd>D</kbd></span><span>turn left and right (arrows work too)</span>
       <span>Drag</span><span>peek around; the view swings back when you let go</span>
@@ -412,6 +440,7 @@
       <span><kbd>Enter</kbd></span><span>say something kind.</span>
       <span><kbd>P</kbd></span><span>take a photo to save or share</span>
     </div>
+    <h3 class="control-title touch-title">Touch controls</h3>
     <div class="keys keys-touch">
       <span>Swipe</span><span>turn and look around</span>
       <span>Tap ground</span><span>walk to that spot</span>
@@ -1615,8 +1644,44 @@
   tapify($('tally'), () => { $('tally').classList.remove('open'); $('bagbtn').setAttribute('aria-expanded', 'false'); });
   tapify($('bagbtn'), () => { const open = $('tally').classList.toggle('open'); $('bagbtn').setAttribute('aria-expanded', String(open)); });
 
+  const gamepadCast = { index: 0, label: 'A / ×' };
+  const gamepadKindWord = { index: 12, label: 'D-pad ↑' };
+  const gamepadPhoto = { index: 15, label: 'D-pad →' };
+  $('kind-shortcut').textContent = gamepadKindWord.label;
+  $('photo-shortcut').textContent = gamepadPhoto.label;
+  const gamepadPhotoPanel = {
+    share: { index: 3, label: 'Y / △' },
+    save: { index: 2, label: 'X / □' },
+    close: { index: 1, label: 'B / ○' }
+  };
+  for (const [action, binding] of Object.entries(gamepadPhotoPanel)) {
+    $('photo-' + action + '-shortcut').textContent = binding.label;
+  }
+  const gamepadActions = {
+    E: { index: 2, label: 'X / □' },
+    B: { index: 3, label: 'Y / △' },
+    G: { index: 1, label: 'B / ○' },
+    T: { index: 14, label: 'D-pad ←' }
+  };
+  let inputMode = isTouch ? 'touch' : 'keyboard';
+  let nonGamepadMode = inputMode;
+
+  function setInputMode(mode) {
+    if (mode !== 'gamepad') nonGamepadMode = mode;
+    if (mode === inputMode) return;
+    inputMode = mode;
+    document.body.classList.toggle('gamepad', mode === 'gamepad');
+    $('photobtn').title = mode === 'gamepad' ? 'Take a photo (' + gamepadPhoto.label + ')'
+      : mode === 'keyboard' ? 'Take a photo (P)' : 'Take a photo';
+  }
+
+  addEventListener('pointerdown', (e) => {
+    setInputMode(e.pointerType === 'touch' ? 'touch' : 'keyboard');
+  }, true);
+
   addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT') return;
+    if (!['Control', 'Alt', 'Meta'].includes(e.key)) setInputMode('keyboard');
     if (!$('photo').hidden || !$('leave').hidden) { if (e.code === 'Escape') { closePhoto(); closeLeave(); } return; } // a sheet is up: the lake waits
     if (!entered) return;
     if (e.code === 'Enter') { e.preventDefault(); if (!e.repeat) sayKindWord(); return; }
@@ -1628,6 +1693,83 @@
   });
   addEventListener('keyup', (e) => keys.delete(e.code));
   addEventListener('blur', () => keys.clear());
+
+  let previousPad = null;
+  let previousButtons = [];
+
+  function readGamepad() {
+    try {
+      return Array.from(navigator.getGamepads?.() ?? []).find(pad => pad?.connected && pad.mapping === 'standard');
+    } catch {
+      // Embedded browsers can block gamepad access.
+      return null;
+    }
+  }
+
+  function stickAxis(value = 0) {
+    const deadZone = 0.18;
+    return Math.sign(value) * Math.max(0, (Math.abs(value) - deadZone) / (1 - deadZone));
+  }
+
+  function updateGamepad(dt) {
+    const pad = readGamepad();
+    const buttons = pad?.buttons.map(button => button.pressed) ?? [];
+    const samePad = pad && previousPad?.index === pad.index && previousPad.id === pad.id;
+    const lastButtons = previousButtons;
+    const justPressed = index => samePad && buttons[index] && !lastButtons[index];
+    previousPad = pad;
+    previousButtons = buttons;
+
+    if (!pad) {
+      if (inputMode === 'gamepad') setInputMode(nonGamepadMode);
+      return;
+    }
+    if (document.hidden || !document.hasFocus()) return;
+    const lookX = stickAxis(pad.axes[0]);
+    const lookY = stickAxis(pad.axes[1]);
+    const walkX = stickAxis(pad.axes[2]);
+    const walkY = stickAxis(pad.axes[3]);
+    if (lookX || lookY || walkX || walkY || buttons.some((down, index) => down && (!samePad || !lastButtons[index]))) {
+      setInputMode('gamepad');
+    }
+    if (!entered) {
+      const dpadY = Number(!!buttons[13]) - Number(!!buttons[12]);
+      $('welcome').scrollTop += (dpadY || lookY || walkY) * 520 * dt;
+      if (justPressed(gamepadCast.index) && $('enter').getClientRects().length) enterLake();
+      return;
+    }
+
+    if (!$('photo').hidden) {
+      if (justPressed(gamepadPhotoPanel.close.index)) closePhoto();
+      else if (justPressed(gamepadPhotoPanel.save.index)) savePhoto();
+      else if (justPressed(gamepadPhotoPanel.share.index) && !$('photo-share').hidden) sharePhoto(true);
+      return;
+    }
+
+    if (!$('leave').hidden || !$('cust').hidden) {
+      if (justPressed(1)) {
+        closeLeave();
+        openCust(false);
+      }
+      return;
+    }
+    if (document.activeElement?.tagName === 'INPUT') return;
+
+    if (justPressed(gamepadCast.index)) action();
+    for (const [key, binding] of Object.entries(gamepadActions)) {
+      if (justPressed(binding.index)) runAction(key);
+    }
+    if (justPressed(gamepadKindWord.index)) sayKindWord();
+    if (justPressed(gamepadPhoto.index)) {
+      takePhoto();
+      return;
+    }
+
+    const looking = !!(lookX || lookY);
+    cam.orbit -= lookX * 2.4 * dt;
+    cam.pitch = clamp(cam.pitch + lookY * 1.5 * dt, 0.08, 1.25);
+    return { fwd: -walkY, turn: -walkX, running: !!buttons[5], looking };
+  }
 
   // camera: always behind the character, looking the way they face
   const cam = { yaw: Math.PI, pitch: 0.42, dist: 7.5, orbit: 0, pitchBase: 0.42, held: false };
@@ -1792,8 +1934,9 @@
     }
   }
   function fishingPrompt() {
-    const k = isTouch ? '<kbd>Cast</kbd>' : '<kbd>Space</kbd>';
-    if (F.phase === 'bite') setPrompt('Bite! ' + (isTouch ? 'Tap <kbd>Cast</kbd>' : 'Press <kbd>Space</kbd>') + ' to reel', 'bite');
+    const key = inputMode === 'gamepad' ? gamepadCast.label : inputMode === 'touch' ? 'Cast' : 'Space';
+    const k = '<kbd>' + key + '</kbd>';
+    if (F.phase === 'bite') setPrompt('Bite! ' + (inputMode === 'touch' ? 'Tap ' : 'Press ') + k + ' to reel', 'bite');
     else if (F.phase === 'wait') setPrompt(F.bites >= 3 ? 'No luck here. ' + k + ' to reel in' : 'Waiting for a bite. ' + k + ' reels in');
     else if (F.phase === 'cast' || F.phase === 'reel') setPrompt('');
     else if (me.eating) setPrompt('');
@@ -1887,12 +2030,13 @@
   }
   function runAction(key) { const a = actions.find((x) => x.key === key); if (a) a.run(); }
   function renderActions() {
-    const sig = actions.map((a) => a.key + a.label).join('|');
+    const sig = inputMode + '|' + actions.map((a) => a.key + a.label).join('|');
     if (sig === actsSig) return; actsSig = sig;
     actsEl.innerHTML = '';
     for (const a of actions) {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'act';
-      b.innerHTML = esc(a.label) + (isTouch ? '' : ' <kbd>' + a.key + '</kbd>');
+      const key = inputMode === 'gamepad' ? gamepadActions[a.key]?.label : inputMode === 'keyboard' ? a.key : '';
+      b.innerHTML = esc(a.label) + (key ? ' <kbd>' + esc(key) + '</kbd>' : '');
       tapify(b, () => runAction(a.key));
       actsEl.appendChild(b);
     }
@@ -2233,10 +2377,25 @@
   tapify($('leave-close'), closeLeave);
   $('leave').addEventListener('click', (e) => { if (e.target === $('leave')) closeLeave(); });
   tapify($('photo-save'), savePhoto);
-  tapify($('photo-share'), () => {
-    // the share sheet needs the tap's own user activation, which is why sharing waits for this button
-    navigator.share({ files: [photoFile()], title: 'Stillwater Lake', text: me.name + ' at Stillwater Lake' }).catch((e) => { if (e && e.name !== 'AbortError') savePhoto(); });
-  });
+  function showShareInputHint() {
+    if ($('photo').hidden) return;
+    $('photo-hint').textContent = 'Press Enter, click, or tap Share to open the share sheet.';
+    $('photo-share').focus();
+  }
+  async function sharePhoto(fromGamepad) {
+    if (fromGamepad && navigator.userActivation?.isActive === false) {
+      showShareInputHint();
+      return;
+    }
+    try {
+      await navigator.share({ files: [photoFile()], title: 'Stillwater Lake', text: me.name + ' at Stillwater Lake' });
+    } catch (e) {
+      if (e?.name === 'AbortError') return;
+      if (fromGamepad) showShareInputHint();
+      else savePhoto();
+    }
+  }
+  tapify($('photo-share'), () => sharePhoto(false));
   $('photo').addEventListener('click', (e) => { if (e.target === $('photo')) closePhoto(); }); // a tap on the dim backdrop closes it
 
   // ---------------------------------------------------------------- main loop
@@ -2283,8 +2442,14 @@
       if (keys.has('KeyA') || keys.has('ArrowLeft')) turn += 1;
       if (keys.has('KeyD') || keys.has('ArrowRight')) turn -= 1;
     }
+    const controls = updateGamepad(dt);
+    if (controls?.fwd || controls?.turn) {
+      clearTarget();
+      fwd ||= controls.fwd;
+      turn ||= controls.turn;
+    }
     if (turn) { me.yaw += turn * 2.4 * dt; cam.yaw = me.yaw; }
-    let running = keys.has('ShiftLeft') || keys.has('ShiftRight');
+    let running = keys.has('ShiftLeft') || keys.has('ShiftRight') || !!controls?.running;
     let moving = false;
     const wade = swimming(me.x, me.z) ? 0.55 : onWater(me.x, me.z) ? 0.7 : 1; // water is slow going: wading a little, swimming more
     const step = (dx, dz) => { me.x += dx; me.z += dz; }; // campfires, the dock and the water are all walk-through
@@ -2342,7 +2507,7 @@
     // camera: eases in behind the character whenever they turn on their own. A swipe or drag only moves the view,
     // never the character; the view stays where it was put while they stand still, and swings back behind them once they walk.
     cam.yaw = angleLerp(cam.yaw, me.yaw, 1 - Math.pow(0.01, dt));
-    if (!cam.held && moving) cam.orbit = lerp(cam.orbit, 0, 1 - Math.pow(0.03, dt));
+    if (!cam.held && !controls?.looking && moving) cam.orbit = lerp(cam.orbit, 0, 1 - Math.pow(0.03, dt));
     const viewYaw = cam.yaw + cam.orbit;
     camTarget.set(me.x, me.y + 1.25, me.z);
     const cx = me.x - Math.sin(viewYaw) * Math.cos(cam.pitch) * cam.dist;

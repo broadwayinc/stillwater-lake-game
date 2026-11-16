@@ -2507,7 +2507,12 @@
     // camera: eases in behind the character whenever they turn on their own. A swipe or drag only moves the view,
     // never the character; the view stays where it was put while they stand still, and swings back behind them once they walk.
     cam.yaw = angleLerp(cam.yaw, me.yaw, 1 - Math.pow(0.01, dt));
-    if (!cam.held && !controls?.looking && moving) cam.orbit = lerp(cam.orbit, 0, 1 - Math.pow(0.03, dt));
+    if (!cam.held && !controls?.looking && moving) {
+      const follow = 1 - Math.pow(0.03, dt);
+      cam.orbit = lerp(cam.orbit, 0, follow);
+      const maxFollowPitch = cam.pitchBase + 0.23;
+      if (cam.pitch > maxFollowPitch) cam.pitch = lerp(cam.pitch, maxFollowPitch, follow);
+    }
     const viewYaw = cam.yaw + cam.orbit;
     camTarget.set(me.x, me.y + 1.25, me.z);
     const cx = me.x - Math.sin(viewYaw) * Math.cos(cam.pitch) * cam.dist;

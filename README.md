@@ -1,31 +1,45 @@
-# Stillwater Lake
+# 잔잔 호수
 
 ![Stillwater Lake](./og.jpg)
 
-A quiet, shared 3D lakeside game. Walk around the lake, fish, gather branches and stones, build a campfire, grill your catch, and meet other visitors. It runs in a browser on desktop and mobile, with no signup required.
+잔잔한 3D 호숫가에서 다른 사람들과 함께 즐기는 게임입니다. 호수 주변을 산책하고, 낚시하고, 나뭇가지와 돌을 모아 모닥불을 피워 보세요. 잡은 물고기를 구워 먹으며 다른 방문객들과 어울릴 수도 있습니다. 가입 없이 PC와 모바일 브라우저에서 즐길 수 있습니다.
 
-This project is completely open source. 
+이 프로젝트는 전체 소스 코드가 공개된 오픈 소스입니다.
 
-**IMPORTANT**: Replace `SKAPI_PROJECT_ID` in `index.html` with your own project ID.
+**중요**: `index.html`의 `SKAPI_PROJECT_ID`를 본인의 프로젝트 ID로 변경해 주세요.
 
+## 구현 방식
 
-## How it was built
+이 애플리케이션은 [`index.html`](./index.html) 파일 하나에 HTML, CSS, JavaScript를 작성한 단일 페이지로 구현되어 있습니다. [Three.js](https://threejs.org/) 로 WebGL 기반의 3D 세계를 렌더링하며, 게임 로직은 이동, 낚시, 수집, 요리, 플레이어 간 상호작용을 처리합니다. Three.js와 Skapi JavaScript SDK는 CDN에서 불러옵니다.
 
-The application is a single-page experience implemented in [`index.html`](./index.html), using inline HTML, CSS, and JavaScript. [Three.js](https://threejs.org/) renders the WebGL world; the game logic handles movement, fishing, gathering, cooking, and player interactions. The page loads Three.js and the Skapi JavaScript SDK from CDNs.
+## 활용한 Skapi 기능
 
-## Skapi features demonstrated
+- **익명 인증:** 방문객에게 임시 Skapi 세션을 발급하여 계정을 만들지 않고도 참여할 수 있습니다.
+- **실시간 그룹:** 플레이어는 `stillwater-lake` 그룹에 참여합니다. 실시간 메시지로 이동, 낚시, 모닥불, 생선구이 등 플레이어의 상태와 활동을 공유하여 같은 호수에서 서로의 모습을 볼 수 있습니다.
+- **접속 상태 및 재연결:** 입장·퇴장 알림으로 현재 접속 인원을 갱신합니다. 연결이 끊기거나 임시 세션이 만료된 방문객이 돌아왔을 때 재연결을 처리합니다.
 
-- **Anonymous authentication:** visitors receive temporary Skapi sessions and can join without creating an account.
-- **Realtime groups:** players join the `stillwater-lake` group. Realtime messages share player state and events, including movement, fishing, campfires, grills, and other interactions, so participants see one another in the same lake.
-- **Presence and reconnection:** join/leave notices update who is at the lake, and the app handles reconnecting or returning visitors whose temporary session has expired.
+## 로컬에서 실행하기
 
-## Run locally
-
-You can open `index.html` directly in a browser, or run the app with the included local server. To start the server:
+`index.html` 을 브라우저에서 직접 열거나, 프로젝트에 포함된 로컬 서버로 실행할 수 있습니다. 서버를 시작하려면 다음 명령을 실행하세요.
 
 ```sh
 npm install
 npm run dev
 ```
 
-Then visit [http://localhost:5173](http://localhost:5173).
+그런 다음 [http://localhost:5173](http://localhost:5173) 에 접속하세요.
+
+## 게임패드 조작
+
+첫 화면에서는 Xbox A 또는 PlayStation × 버튼을 눌러 호수에 입장할 수 있습니다. 브라우저가 표준 게임패드로 인식하면 왼쪽 스틱으로 시점을 돌리고 오른쪽 스틱으로 이동할 수 있습니다. 오른쪽 스틱을 거의 정면으로 밀면 캐릭터가 직진하고 카메라가 등 뒤로 돌아옵니다. Recontrol을 쓰고 있다면 이 게임에서 스틱과 버튼의 키 매핑을 끄고 플레이하세요.
+
+| 행동 | Xbox | PlayStation | 키보드 |
+| --- | --- | --- | --- |
+| 낚싯줄 던지기 / 낚아 올리기 | A | × | Space / F |
+| 줍기 / 먹기 | X | □ | E |
+| 모닥불 피우기 | Y | △ | B |
+| 물고기 굽기 | RB | R1 | G |
+| 감사의 춤 | B | ○ | T |
+| 따뜻한 말 건네기 | LB | L1 | Enter |
+| 사진 찍기 | View | Create / Share | P |
+| 누른 채 이동해서 달리기 | RT | R2 | Shift |

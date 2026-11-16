@@ -3078,7 +3078,8 @@
                     if (e < -0.02)
                         sunDir
                             .set(-cosA * 0.8, Math.max(0.3, -e), -0.5)
-                            .normalize(); // moon, opposite the sun
+                            .normalize();
+                    // moon, opposite the sun
                     else sunDir.set(cosA, Math.max(e, 0.04), -0.45).normalize();
                     let i = 0;
                     while (i < STOPS.length - 2 && e > STOPS[i + 1].e) i++;
@@ -6404,8 +6405,14 @@
                         me.yaw,
                         1 - Math.pow(0.01, dt),
                     );
-                    if (!cam.held && !controls?.looking && moving)
-                        cam.orbit = lerp(cam.orbit, 0, 1 - Math.pow(0.03, dt));
+                    if (!cam.held && !controls?.looking && moving) {
+                        const follow = 1 - Math.pow(0.03, dt);
+                        cam.orbit = lerp(cam.orbit, 0, follow);
+                        const maxFollowPitch = cam.pitchBase + 0.23;
+                        if (cam.pitch > maxFollowPitch) {
+                            cam.pitch = lerp(cam.pitch, maxFollowPitch, follow);
+                        }
+                    }
                     const viewYaw = cam.yaw + cam.orbit;
                     camTarget.set(me.x, me.y + 1.25, me.z);
                     const cx =

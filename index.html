@@ -238,7 +238,29 @@
     white-space: nowrap; pointer-events: none;
   }
   body.gamepad.entered .gamepad-shortcut { display: block; }
-  #photobtn .gamepad-shortcut { left: calc(100% + 6px); }
+  .gamepad-symbol {
+    font-family: system-ui, sans-serif;
+    font-size: 1em;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .gamepad-symbol.triangle { font-size: 1.1em; }
+  .gamepad-symbol.square, .gamepad-symbol.circle {
+    display: inline-block;
+    position: relative;
+    width: 0.85em;
+    height: 0.85em;
+    vertical-align: -0.08em;
+    color: transparent;
+  }
+  .gamepad-symbol.square { width: 0.78em; height: 0.78em; vertical-align: -0.11em; }
+  .gamepad-symbol.square::before, .gamepad-symbol.circle::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: #d8b8ff;
+  }
+  .gamepad-symbol.circle::before { border-radius: 50%; background: #ff978c; }
   #kindbtn .gamepad-shortcut { right: calc(100% + 6px); }
   #flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 6; transition: opacity .4s; }
   #flash.on { opacity: .8; transition: none; }
@@ -381,7 +403,6 @@
   <button id="kindbtn" type="button" aria-label="Say something kind">Kind<br>word<kbd id="kind-shortcut" class="gamepad-shortcut" aria-hidden="true"></kbd></button>
   <button id="photobtn" type="button" aria-label="Take a photo" title="Take a photo (P)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.6"/></svg>
-    <kbd id="photo-shortcut" class="gamepad-shortcut" aria-hidden="true"></kbd>
   </button>
 </div>
 <div id="flash"></div>
@@ -418,15 +439,18 @@
     <h3 class="control-title">Gamepad controls</h3>
     <p class="control-note">Pair via Bluetooth and press a button with this tab focused.</p>
     <div class="keys">
-      <span>Welcome</span><span>Either stick or D-pad up/down to scroll. <kbd>A / ×</kbd> enters the lake.</span>
-      <span>Left stick</span><span>Look around and tilt the camera</span>
-      <span>Right stick</span><span>Walk forward and back, turn left and right</span>
-      <span><kbd>RB / R1</kbd></span><span>Hold to run</span>
-      <span><kbd>A / ×</kbd></span><span>Cast or reel</span>
-      <span><kbd>X / □</kbd></span><span>Pick up a branch or stone, or eat</span>
-      <span><kbd>Y / △</kbd></span><span>Build a campfire</span>
-      <span><kbd>B / ○</kbd></span><span>Grill a fish, or close a panel</span>
-      <span><kbd>↑</kbd> <kbd>←</kbd> <kbd>→</kbd></span><span>Say a kind word, dance, take a photo</span>
+      <span>Welcome</span><span>Either stick or D-pad up/down to scroll. <kbd><span class="gamepad-symbol">✖</span></kbd> enters the lake.</span>
+      <span>Left stick</span><span>Move in any direction relative to the camera</span>
+      <span>Right stick</span><span>Look around and tilt the camera</span>
+      <span><kbd>LT / L2</kbd></span><span>Hold while moving to run</span>
+      <span><kbd><span class="gamepad-symbol">✖</span></kbd></span><span>Cast or reel</span>
+      <span><kbd><span class="gamepad-symbol square">■</span></kbd></span><span>Pick up a branch or stone, or eat</span>
+      <span><kbd><span class="gamepad-symbol triangle">▲</span></kbd></span><span>Build a campfire</span>
+      <span><kbd><span class="gamepad-symbol circle">●</span></kbd></span><span>Grill a fish, or close a panel</span>
+      <span>D-pad</span><span>Move forward, left, right, or back</span>
+      <span><kbd>RB / R1</kbd></span><span>Say something kind</span>
+      <span><kbd>RT / R2</kbd> + right stick</span><span>Hold the trigger and move the stick up to zoom in or down to zoom out</span>
+      <span><kbd>LB / L1</kbd></span><span>Appreciation dance</span>
     </div>
     <h3 class="control-title">Keyboard and mouse controls</h3>
     <div class="keys">
@@ -1644,24 +1668,29 @@
   tapify($('tally'), () => { $('tally').classList.remove('open'); $('bagbtn').setAttribute('aria-expanded', 'false'); });
   tapify($('bagbtn'), () => { const open = $('tally').classList.toggle('open'); $('bagbtn').setAttribute('aria-expanded', String(open)); });
 
-  const gamepadCast = { index: 0, label: 'A / ×' };
-  const gamepadKindWord = { index: 12, label: 'D-pad ↑' };
-  const gamepadPhoto = { index: 15, label: 'D-pad →' };
+  function renderShortcut(label) {
+    const shapes = { '■': 'square', '▲': 'triangle', '●': 'circle' };
+    return esc(label).replace(/[✖■▲●]/g, symbol =>
+      '<span class="gamepad-symbol ' + (shapes[symbol] ?? '') + '">' + symbol + '</span>'
+    );
+  }
+
+  const gamepadCast = { index: 0, label: '✖' };
+  const gamepadKindWord = { index: 5, label: 'RB / R1' };
   $('kind-shortcut').textContent = gamepadKindWord.label;
-  $('photo-shortcut').textContent = gamepadPhoto.label;
   const gamepadPhotoPanel = {
-    share: { index: 3, label: 'Y / △' },
-    save: { index: 2, label: 'X / □' },
-    close: { index: 1, label: 'B / ○' }
+    share: { index: 3, label: '▲' },
+    save: { index: 2, label: '■' },
+    close: { index: 1, label: '●' }
   };
   for (const [action, binding] of Object.entries(gamepadPhotoPanel)) {
-    $('photo-' + action + '-shortcut').textContent = binding.label;
+    $('photo-' + action + '-shortcut').innerHTML = renderShortcut(binding.label);
   }
   const gamepadActions = {
-    E: { index: 2, label: 'X / □' },
-    B: { index: 3, label: 'Y / △' },
-    G: { index: 1, label: 'B / ○' },
-    T: { index: 14, label: 'D-pad ←' }
+    E: { index: 2, label: '■' },
+    B: { index: 3, label: '▲' },
+    G: { index: 1, label: '●' },
+    T: { index: 4, label: 'LB / L1' }
   };
   let inputMode = isTouch ? 'touch' : 'keyboard';
   let nonGamepadMode = inputMode;
@@ -1671,8 +1700,7 @@
     if (mode === inputMode) return;
     inputMode = mode;
     document.body.classList.toggle('gamepad', mode === 'gamepad');
-    $('photobtn').title = mode === 'gamepad' ? 'Take a photo (' + gamepadPhoto.label + ')'
-      : mode === 'keyboard' ? 'Take a photo (P)' : 'Take a photo';
+    $('photobtn').title = mode === 'keyboard' ? 'Take a photo (P)' : 'Take a photo';
   }
 
   addEventListener('pointerdown', (e) => {
@@ -1706,6 +1734,17 @@
     }
   }
 
+  async function rumbleGamepad(duration, weakMagnitude, strongMagnitude) {
+    if (inputMode !== 'gamepad' || document.hidden || !document.hasFocus()) return;
+    try {
+      await readGamepad()?.vibrationActuator?.playEffect?.('dual-rumble', {
+        duration, weakMagnitude, strongMagnitude
+      });
+    } catch {
+      // Haptics availability depends on the browser and controller.
+    }
+  }
+
   function stickAxis(value = 0) {
     const deadZone = 0.18;
     return Math.sign(value) * Math.max(0, (Math.abs(value) - deadZone) / (1 - deadZone));
@@ -1725,15 +1764,15 @@
       return;
     }
     if (document.hidden || !document.hasFocus()) return;
-    const lookX = stickAxis(pad.axes[0]);
-    const lookY = stickAxis(pad.axes[1]);
-    const walkX = stickAxis(pad.axes[2]);
-    const walkY = stickAxis(pad.axes[3]);
+    const walkX = stickAxis(pad.axes[0]);
+    const walkY = stickAxis(pad.axes[1]);
+    const lookX = stickAxis(pad.axes[2]);
+    const lookY = stickAxis(pad.axes[3]);
     if (lookX || lookY || walkX || walkY || buttons.some((down, index) => down && (!samePad || !lastButtons[index]))) {
       setInputMode('gamepad');
     }
+    const dpadY = Number(!!buttons[13]) - Number(!!buttons[12]);
     if (!entered) {
-      const dpadY = Number(!!buttons[13]) - Number(!!buttons[12]);
       $('welcome').scrollTop += (dpadY || lookY || walkY) * 520 * dt;
       if (justPressed(gamepadCast.index) && $('enter').getClientRects().length) enterLake();
       return;
@@ -1760,15 +1799,16 @@
       if (justPressed(binding.index)) runAction(key);
     }
     if (justPressed(gamepadKindWord.index)) sayKindWord();
-    if (justPressed(gamepadPhoto.index)) {
-      takePhoto();
-      return;
-    }
 
     const looking = !!(lookX || lookY);
     cam.orbit -= lookX * 2.4 * dt;
-    cam.pitch = clamp(cam.pitch + lookY * 1.5 * dt, 0.08, 1.25);
-    return { fwd: -walkY, turn: -walkX, running: !!buttons[5], looking };
+    if (buttons[7]) {
+      cam.dist = clamp(cam.dist * Math.exp(lookY * 1.5 * dt), 3.2, 16);
+    } else {
+      cam.pitch = clamp(cam.pitch + lookY * 1.5 * dt, 0.08, 1.25);
+    }
+    const strafe = Number(!!buttons[15]) - Number(!!buttons[14]);
+    return { walkX, walkY, fwd: -dpadY, strafe, running: !!buttons[6], looking };
   }
 
   // camera: always behind the character, looking the way they face
@@ -1889,6 +1929,7 @@
     const f = rollFish();
     if (f.r === 'junk') { showCard('You reeled in', f.n, 'Someone\'s been missing this', 'common'); log('<span class="n">' + esc(me.name) + '</span> reeled in an old boot.', 'sys'); }
     else {
+      rumbleGamepad(180, 0.35, 0.25);
       me.caught++;
       if (!me.best || f.wt > me.best.wt) me.best = { n: f.n, wt: f.wt };
       me.bag.push({ n: f.n, wt: f.wt, r: f.r }); if (me.bag.length > 12) me.bag.shift();
@@ -1921,7 +1962,11 @@
     } else if (F.phase === 'wait') {
       F.bobber.y = 0.02 + Math.sin(F.t * 2.1) * 0.03;
       F.timer -= dt;
-      if (F.timer <= 0) { F.phase = 'bite'; F.t = 0; ripple(F.bobber.x, F.bobber.z); }
+      if (F.timer <= 0) {
+        F.phase = 'bite'; F.t = 0;
+        ripple(F.bobber.x, F.bobber.z);
+        rumbleGamepad(90, 0.45, 0.08);
+      }
     } else if (F.phase === 'bite') {
       F.bobber.y = -0.22 + Math.sin(F.t * 18) * 0.08;
       if (F.t > 1.35) { F.bites++; F.phase = 'wait'; F.t = 0; F.timer = rand(3, 9); if (F.bites >= 3) { setPrompt('It got away. Reel in and try again.'); } }
@@ -1935,7 +1980,7 @@
   }
   function fishingPrompt() {
     const key = inputMode === 'gamepad' ? gamepadCast.label : inputMode === 'touch' ? 'Cast' : 'Space';
-    const k = '<kbd>' + key + '</kbd>';
+    const k = '<kbd>' + renderShortcut(key) + '</kbd>';
     if (F.phase === 'bite') setPrompt('Bite! ' + (inputMode === 'touch' ? 'Tap ' : 'Press ') + k + ' to reel', 'bite');
     else if (F.phase === 'wait') setPrompt(F.bites >= 3 ? 'No luck here. ' + k + ' to reel in' : 'Waiting for a bite. ' + k + ' reels in');
     else if (F.phase === 'cast' || F.phase === 'reel') setPrompt('');
@@ -2036,7 +2081,7 @@
     for (const a of actions) {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'act';
       const key = inputMode === 'gamepad' ? gamepadActions[a.key]?.label : inputMode === 'keyboard' ? a.key : '';
-      b.innerHTML = esc(a.label) + (key ? ' <kbd>' + esc(key) + '</kbd>' : '');
+      b.innerHTML = esc(a.label) + (key ? ' <kbd>' + renderShortcut(key) + '</kbd>' : '');
       tapify(b, () => runAction(a.key));
       actsEl.appendChild(b);
     }
@@ -2443,20 +2488,32 @@
       if (keys.has('KeyD') || keys.has('ArrowRight')) turn -= 1;
     }
     const controls = updateGamepad(dt);
-    if (controls?.fwd || controls?.turn) {
-      clearTarget();
-      fwd ||= controls.fwd;
-      turn ||= controls.turn;
-    }
+    const strafe = controls?.strafe ?? 0;
+    const stickMoving = !!(controls?.walkX || controls?.walkY);
+    fwd ||= controls?.fwd ?? 0;
     if (turn) { me.yaw += turn * 2.4 * dt; cam.yaw = me.yaw; }
     let running = keys.has('ShiftLeft') || keys.has('ShiftRight') || !!controls?.running;
     let moving = false;
     const wade = swimming(me.x, me.z) ? 0.55 : onWater(me.x, me.z) ? 0.7 : 1; // water is slow going: wading a little, swimming more
     const step = (dx, dz) => { me.x += dx; me.z += dz; }; // campfires, the dock and the water are all walk-through
-    if (fwd) {
+    if (stickMoving) {
       clearTarget();
-      const speed = (running ? 7.2 : 4.0) * wade * fwd;
-      step(Math.sin(me.yaw) * speed * dt, Math.cos(me.yaw) * speed * dt);
+      const viewYaw = cam.yaw + cam.orbit;
+      const sin = Math.sin(viewYaw), cos = Math.cos(viewYaw);
+      const dx = -sin * controls.walkY - cos * controls.walkX;
+      const dz = -cos * controls.walkY + sin * controls.walkX;
+      const distance = (running ? 7.2 : 4.0) * wade * dt / Math.max(1, Math.hypot(dx, dz));
+      step(dx * distance, dz * distance);
+      me.yaw = angleLerp(me.yaw, Math.atan2(dx, dz), 1 - Math.pow(0.0005, dt));
+      // Keep the player's view steady while the character turns toward the stick.
+      cam.yaw = me.yaw;
+      cam.orbit = viewYaw - cam.yaw;
+      moving = true;
+    } else if (fwd || strafe) {
+      clearTarget();
+      const distance = (running ? 7.2 : 4.0) * wade * dt / Math.max(1, Math.hypot(fwd, strafe));
+      const sin = Math.sin(me.yaw), cos = Math.cos(me.yaw);
+      step((sin * fwd - cos * strafe) * distance, (cos * fwd + sin * strafe) * distance);
       moving = true;
     } else if (moveTarget) {
       const dx = moveTarget.x - me.x, dz = moveTarget.z - me.z, d = Math.hypot(dx, dz);
@@ -2509,7 +2566,7 @@
     cam.yaw = angleLerp(cam.yaw, me.yaw, 1 - Math.pow(0.01, dt));
     if (!cam.held && !controls?.looking && moving) {
       const follow = 1 - Math.pow(0.03, dt);
-      cam.orbit = lerp(cam.orbit, 0, follow);
+      if (!stickMoving) cam.orbit = lerp(cam.orbit, 0, follow);
       const maxFollowPitch = cam.pitchBase + 0.23;
       if (cam.pitch > maxFollowPitch) cam.pitch = lerp(cam.pitch, maxFollowPitch, follow);
     }

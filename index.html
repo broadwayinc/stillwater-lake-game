@@ -212,7 +212,7 @@
     background: var(--glass); color: var(--paper); font: 700 12px var(--font-body); line-height: 1.1; display: none; align-items: center; justify-content: center; text-align: center;
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   }
-  body.touch.entered #castbtn, body.touch.entered #kindbtn { display: flex; }
+  body.touch.entered #castbtn, body.entered #kindbtn { display: flex; }
   body.touch #acts { bottom: calc(226px + env(safe-area-inset-bottom, 0px)); }
   body.touch #acts .act { padding: 11px 15px; font-size: 15px; }
   body.touch #brand { padding: 9px 13px; }
@@ -223,14 +223,27 @@
   body.touch #tally { display: none; font-size: 13px; padding: 9px 12px; gap: 2px 12px; top: calc(var(--hud3, 118px) + env(safe-area-inset-top, 0px)); }
   body.touch #tally.open { display: grid; }
   /* photos: a round camera button under the title card, mirroring the bag button on the right */
-  #photobtn {
+  #photobtn, #helpbtn {
     position: fixed; left: calc(max(16px, env(safe-area-inset-left, 0px)) + 6px); top: calc(var(--hud2, 66px) + env(safe-area-inset-top, 0px));
     width: var(--hb, 44px); height: var(--hb, 44px); border-radius: 50%; border: 1px solid var(--glass-edge); background: var(--glass); color: var(--paper); padding: 0;
     display: none; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   }
   #photobtn svg { width: 55%; height: 55%; }
-  body.entered #photobtn { display: flex; }
-  body.gamepad.entered #kindbtn { display: flex; }
+  body.entered #photobtn, body.entered #helpbtn { display: flex; }
+  #helpbtn {
+    left: calc(max(16px, env(safe-area-inset-left, 0px)) + var(--hb, 44px) + 14px);
+    font: 700 18px var(--font-body);
+  }
+  #helpbtn .gamepad-shortcut { left: calc(100% + 6px); }
+  #help {
+    width: min(460px, calc(100% - 32px)); max-width: none; max-height: calc(100dvh - 32px);
+    background: var(--ink); color: var(--paper); overflow: auto; overscroll-behavior: contain;
+  }
+  #help::backdrop { background: rgba(11,26,32,.65); }
+  #help .help-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+  #help .help-head h2 { margin: 0; font-size: 26px; text-align: left; }
+  #help .help-head button { width: auto; padding: 8px 12px; font-size: 13px; }
+
   .gamepad-shortcut {
     display: none; position: absolute; top: 50%; transform: translateY(-50%);
     padding: 3px 6px; border: 1px solid var(--glass-edge); border-radius: 5px;
@@ -244,6 +257,24 @@
     font-weight: 700;
     line-height: 1;
   }
+  .gamepad-symbol.cross {
+    display: inline-block;
+    position: relative;
+    width: 0.85em;
+    height: 0.85em;
+    vertical-align: -0.08em;
+  }
+  .gamepad-symbol.cross::before, .gamepad-symbol.cross::after {
+    content: '';
+    position: absolute;
+    top: 40%;
+    left: 0;
+    width: 100%;
+    height: 20%;
+    background: currentColor;
+    transform: rotate(45deg);
+  }
+  .gamepad-symbol.cross::after { transform: rotate(-45deg); }
   .gamepad-symbol.triangle { font-size: 1.1em; }
   .gamepad-symbol.square, .gamepad-symbol.circle {
     display: inline-block;
@@ -320,10 +351,6 @@
   .wcard .row input:focus { border-color: var(--sun); }
   .wcard .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 13px; color: var(--drift); margin-bottom: 20px; }
   .wcard .control-title { font-size: 14px; margin: 0 0 8px; color: var(--paper); }
-  .wcard .control-note { font-size: 13px; margin-bottom: 8px; }
-  .wcard .keys-touch, .wcard .touch-title { display: none; }
-  body.touch .wcard .keys-touch { display: grid; }
-  body.touch .wcard .touch-title { display: block; }
   .wcard .keys kbd { font: 700 12px var(--font-body); background: rgba(251,245,234,.12); border: 1px solid var(--glass-edge); border-radius: 5px; padding: 1px 6px; color: var(--paper); }
   .wcard button, #castbtn, #kindbtn { cursor: pointer; }
   .wcard button {
@@ -404,7 +431,53 @@
   <button id="photobtn" type="button" aria-label="Take a photo" title="Take a photo (P)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.6"/></svg>
   </button>
+  <button id="helpbtn" type="button" aria-label="Controls" aria-haspopup="dialog" aria-controls="help" title="Controls">
+    ?<kbd class="gamepad-shortcut" aria-hidden="true">Menu / Options</kbd>
+  </button>
 </div>
+<dialog id="help" class="wcard glass" aria-labelledby="help-title">
+  <div class="help-head">
+    <h2 id="help-title">Controls</h2>
+    <button id="help-close" type="button" autofocus>Close</button>
+  </div>
+    <h3 class="control-title">Gamepad controls</h3>
+    <div class="keys">
+      <span><kbd>Menu / Options</kbd></span><span>Open or close controls</span>
+      <span>Left stick</span><span>Move in any direction relative to the camera</span>
+      <span>Right stick</span><span>Look around and tilt the camera</span>
+      <span><kbd>LT / L2</kbd></span><span>Hold while moving to run</span>
+      <span><kbd><span class="gamepad-symbol cross" role="img" aria-label="Cross"></span></kbd></span><span>Cast or reel</span>
+      <span><kbd><span class="gamepad-symbol square">■</span></kbd></span><span>Pick up a branch or stone, or eat</span>
+      <span><kbd><span class="gamepad-symbol triangle">▲</span></kbd></span><span>Build a campfire</span>
+      <span><kbd><span class="gamepad-symbol circle">●</span></kbd></span><span>Grill a fish, or close a panel</span>
+      <span>D-pad</span><span>Move forward, left, right, or back</span>
+      <span><kbd>RB / R1</kbd></span><span>Say something kind</span>
+      <span><kbd>RT / R2</kbd> + right stick</span><span>Hold the trigger and move the stick up to zoom in or down to zoom out</span>
+      <span><kbd>LB / L1</kbd></span><span>Appreciation dance</span>
+    </div>
+    <h3 class="control-title">Keyboard and mouse controls</h3>
+    <div class="keys">
+      <span><kbd>W</kbd><kbd>S</kbd></span><span>walk forward and back, hold <kbd>Shift</kbd> to run</span>
+      <span><kbd>A</kbd><kbd>D</kbd></span><span>turn left and right (arrows work too)</span>
+      <span>Drag</span><span>peek around; the view swings back when you let go</span>
+      <span>Click</span><span>walk to that spot</span>
+      <span><kbd>Space</kbd></span><span>cast near water, then reel when it bites</span>
+      <span><kbd>E</kbd><kbd>B</kbd><kbd>G</kbd></span><span>pick up or eat, build a campfire, grill a fish</span>
+      <span><kbd>T</kbd></span><span>appreciation dance, one for every grilled fish you ate</span>
+      <span><kbd>Enter</kbd></span><span>say something kind.</span>
+      <span><kbd>P</kbd></span><span>take a photo to save or share</span>
+    </div>
+    <h3 class="control-title">Touch controls</h3>
+    <div class="keys">
+      <span>Swipe</span><span>turn and look around</span>
+      <span>Tap ground</span><span>walk to that spot</span>
+      <span>Pinch</span><span>zoom</span>
+      <span><kbd>Cast</kbd></span><span>cast near water, tap again when it bites</span>
+      <span><kbd>Kind word</kbd></span><span>say something kind.</span>
+      <span>Camera</span><span>take a photo to save or share</span>
+      <span>Buttons</span><span>appear when there is something to pick up, cook or eat</span>
+    </div>
+</dialog>
 <div id="flash"></div>
 <div id="photo" hidden>
   <div class="sheet glass" role="dialog" aria-label="Your photo">
@@ -436,44 +509,6 @@
       <button id="inapp-cont" class="cont" type="button">Continue here anyway</button>
     </div>
     <form id="wname-form" class="row"><input id="wname" maxlength="18" placeholder="Your name" autocomplete="off" spellcheck="false" enterkeyhint="go"></form>
-    <h3 class="control-title">Gamepad controls</h3>
-    <p class="control-note">Pair via Bluetooth and press a button with this tab focused.</p>
-    <div class="keys">
-      <span>Welcome</span><span>Either stick or D-pad up/down to scroll. <kbd><span class="gamepad-symbol">✖</span></kbd> enters the lake.</span>
-      <span>Left stick</span><span>Move in any direction relative to the camera</span>
-      <span>Right stick</span><span>Look around and tilt the camera</span>
-      <span><kbd>LT / L2</kbd></span><span>Hold while moving to run</span>
-      <span><kbd><span class="gamepad-symbol">✖</span></kbd></span><span>Cast or reel</span>
-      <span><kbd><span class="gamepad-symbol square">■</span></kbd></span><span>Pick up a branch or stone, or eat</span>
-      <span><kbd><span class="gamepad-symbol triangle">▲</span></kbd></span><span>Build a campfire</span>
-      <span><kbd><span class="gamepad-symbol circle">●</span></kbd></span><span>Grill a fish, or close a panel</span>
-      <span>D-pad</span><span>Move forward, left, right, or back</span>
-      <span><kbd>RB / R1</kbd></span><span>Say something kind</span>
-      <span><kbd>RT / R2</kbd> + right stick</span><span>Hold the trigger and move the stick up to zoom in or down to zoom out</span>
-      <span><kbd>LB / L1</kbd></span><span>Appreciation dance</span>
-    </div>
-    <h3 class="control-title">Keyboard and mouse controls</h3>
-    <div class="keys">
-      <span><kbd>W</kbd><kbd>S</kbd></span><span>walk forward and back, hold <kbd>Shift</kbd> to run</span>
-      <span><kbd>A</kbd><kbd>D</kbd></span><span>turn left and right (arrows work too)</span>
-      <span>Drag</span><span>peek around; the view swings back when you let go</span>
-      <span>Click</span><span>walk to that spot</span>
-      <span><kbd>Space</kbd></span><span>cast near water, then reel when it bites</span>
-      <span><kbd>E</kbd><kbd>B</kbd><kbd>G</kbd></span><span>pick up or eat, build a campfire, grill a fish</span>
-      <span><kbd>T</kbd></span><span>appreciation dance, one for every grilled fish you ate</span>
-      <span><kbd>Enter</kbd></span><span>say something kind.</span>
-      <span><kbd>P</kbd></span><span>take a photo to save or share</span>
-    </div>
-    <h3 class="control-title touch-title">Touch controls</h3>
-    <div class="keys keys-touch">
-      <span>Swipe</span><span>turn and look around</span>
-      <span>Tap ground</span><span>walk to that spot</span>
-      <span>Pinch</span><span>zoom</span>
-      <span><kbd>Cast</kbd></span><span>cast near water, tap again when it bites</span>
-      <span><kbd>Kind word</kbd></span><span>say something kind.</span>
-      <span>Camera</span><span>take a photo to save or share</span>
-      <span>Buttons</span><span>appear when there is something to pick up, cook or eat</span>
-    </div>
     <button id="enter" type="button">Walk to the lake</button>
     <div class="credits">
       <a href="https://github.com/broadwayinc/stillwater-lake-game" target="_blank" rel="noopener noreferrer">GitHub Open Source</a>
@@ -1669,8 +1704,9 @@
   tapify($('bagbtn'), () => { const open = $('tally').classList.toggle('open'); $('bagbtn').setAttribute('aria-expanded', String(open)); });
 
   function renderShortcut(label) {
+    if (label === '✖') return '<span class="gamepad-symbol cross" role="img" aria-label="Cross"></span>';
     const shapes = { '■': 'square', '▲': 'triangle', '●': 'circle' };
-    return esc(label).replace(/[✖■▲●]/g, symbol =>
+    return esc(label).replace(/[■▲●]/g, symbol =>
       '<span class="gamepad-symbol ' + (shapes[symbol] ?? '') + '">' + symbol + '</span>'
     );
   }
@@ -1710,6 +1746,7 @@
   addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT') return;
     if (!['Control', 'Alt', 'Meta'].includes(e.key)) setInputMode('keyboard');
+    if ($('help').open) return;
     if (!$('photo').hidden || !$('leave').hidden) { if (e.code === 'Escape') { closePhoto(); closeLeave(); } return; } // a sheet is up: the lake waits
     if (!entered) return;
     if (e.code === 'Enter') { e.preventDefault(); if (!e.repeat) sayKindWord(); return; }
@@ -1778,6 +1815,12 @@
       return;
     }
 
+    if ($('help').open) {
+      if (justPressed(9) || justPressed(1)) $('help').close();
+      else $('help').scrollTop += (dpadY || walkY || lookY) * 520 * dt;
+      return;
+    }
+
     if (!$('photo').hidden) {
       if (justPressed(gamepadPhotoPanel.close.index)) closePhoto();
       else if (justPressed(gamepadPhotoPanel.save.index)) savePhoto();
@@ -1790,6 +1833,10 @@
         closeLeave();
         openCust(false);
       }
+      return;
+    }
+    if (justPressed(9)) {
+      openHelp();
       return;
     }
     if (document.activeElement?.tagName === 'INPUT') return;
@@ -1903,6 +1950,16 @@
     }
     el.addEventListener('click', (e) => { if (Date.now() - last < 700) { e.preventDefault(); return; } fire(); });
   }
+  function openHelp() {
+    if (!entered || $('help').open) return;
+    keys.clear();
+    clearTarget();
+    $('help').showModal();
+    $('help').scrollTop = 0;
+  }
+  $('helpbtn').addEventListener('click', openHelp);
+  $('help-close').addEventListener('click', () => $('help').close());
+
   tapify($('castbtn'), () => { if (entered) action(); });
 
   // ---------------------------------------------------------------- fishing state machine
@@ -1978,6 +2035,27 @@
       if (F.t > 0.9) { F.phase = 'idle'; F.bobber = null; }
     }
   }
+  let walkHintTime = 0, runHintUntil = 0, runHintMode = '';
+
+  function updateRunHint(dt, walking, running) {
+    if (inputMode !== runHintMode) {
+      runHintMode = inputMode;
+      walkHintTime = 0;
+      runHintUntil = 0;
+    }
+    if (running) runHintUntil = 0;
+    if (!walking) {
+      walkHintTime = 0;
+      return;
+    }
+    if (time < runHintUntil) return;
+    walkHintTime += dt;
+    if (walkHintTime >= 3) {
+      walkHintTime = 0;
+      runHintUntil = time + 3;
+    }
+  }
+
   function fishingPrompt() {
     const key = inputMode === 'gamepad' ? gamepadCast.label : inputMode === 'touch' ? 'Cast' : 'Space';
     const k = '<kbd>' + renderShortcut(key) + '</kbd>';
@@ -1985,6 +2063,10 @@
     else if (F.phase === 'wait') setPrompt(F.bites >= 3 ? 'No luck here. ' + k + ' to reel in' : 'Waiting for a bite. ' + k + ' reels in');
     else if (F.phase === 'cast' || F.phase === 'reel') setPrompt('');
     else if (me.eating) setPrompt('');
+    else if (time < runHintUntil && inputMode === runHintMode) {
+      const runKey = inputMode === 'gamepad' ? 'L2 / LT' : 'Shift';
+      setPrompt('Hold <kbd>' + runKey + '</kbd> to run');
+    }
     else if (!me.bag.length && nearestFire(me.x, me.z, GRILL_REACH) && !actions.length) setPrompt('No fish to cook yet. Go catch one.');
     else if (canFish()) setPrompt(k + ' to cast a line');
     else if ((me.inv.wood || me.inv.rock) && hintForFire() && !actions.length) setPrompt(hintForFire());
@@ -2461,6 +2543,7 @@
   tapify($('enter'), enterLake);
   // the account ended while the player was away: out of the lake and back to the opening dialog
   function leaveLake() {
+    if ($('help').open) $('help').close();
     if (F.phase !== 'idle') { F.phase = 'idle'; F.bobber = null; }
     clearTarget(); keys.clear(); openCust(false); closePhoto(); closeLeave(); standUp(); me.danceUntil = 0;
     $('tally').classList.remove('open');
@@ -2544,6 +2627,9 @@
     myChar.g.position.set(me.x, me.y, me.z);
     myChar.g.rotation.y = me.yaw;
     animate(myChar, me.state, F.phase === 'cast' ? Math.min(1, F.t / 0.9) : 0, F.bobber, time, me.dancing, swimming(me.x, me.z), me.sitting ? (me.eating ? 2 : 1) : 0);
+    const walking = entered && moving && !running && !moveTarget && F.phase === 'idle'
+      && inputMode !== 'touch' && !$('help').open && $('photo').hidden && $('leave').hidden && $('cust').hidden;
+    updateRunHint(dt, walking, running);
     if (entered) { fishingPrompt(); actions = computeActions(); renderActions(); }
     if (moving && now - lastStep > 380 && onWater(me.x, me.z)) { lastStep = now; ripple(me.x, me.z); } // wading and swimming stir the surface
     waterUniforms.me.value.set(me.x, me.z, onWater(me.x, me.z) ? clamp(-me.y / 1.2, 0, 1) : 0); // the deeper in, the clearer the water right around the player

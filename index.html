@@ -659,9 +659,29 @@
             body.gamepad.entered .gamepad-shortcut {
                 display: block;
             }
-            #photobtn .gamepad-shortcut {
-                left: calc(100% + 6px);
+            .gamepad-symbol {
+              font-family: system-ui, sans-serif;
+              font-size: 1em;
+              font-weight: 700;
+              line-height: 1;
             }
+            .gamepad-symbol.triangle { font-size: 1.1em; }
+            .gamepad-symbol.square, .gamepad-symbol.circle {
+              display: inline-block;
+              position: relative;
+              width: 0.85em;
+              height: 0.85em;
+              vertical-align: -0.08em;
+              color: transparent;
+            }
+            .gamepad-symbol.square { width: 0.78em; height: 0.78em; vertical-align: -0.11em; }
+            .gamepad-symbol.square::before, .gamepad-symbol.circle::before {
+              content: '';
+              position: absolute;
+              inset: 0;
+              background: #d8b8ff;
+            }
+            .gamepad-symbol.circle::before { border-radius: 50%; background: #ff978c; }
             #kindbtn .gamepad-shortcut {
                 right: calc(100% + 6px);
             }
@@ -1242,11 +1262,6 @@
                     />
                     <circle cx="12" cy="13" r="3.6" />
                 </svg>
-                <kbd
-                    id="photo-shortcut"
-                    class="gamepad-shortcut"
-                    aria-hidden="true"
-                ></kbd>
             </button>
         </div>
         <div id="flash"></div>
@@ -1356,29 +1371,20 @@
                     />
                 </form>
                 <h3 class="control-title">게임패드 조작</h3>
-                <p class="control-note">
-                    블루투스로 페어링한 뒤 이 탭을 열고 패드 버튼을 한 번
-                    누르세요.
-                </p>
+                <p class="control-note">블루투스로 페어링한 뒤 이 탭에서 패드 버튼을 한 번 누르세요.</p>
                 <div class="keys">
-                    <span>시작 화면</span
-                    ><span
-                        >스틱 또는 방향 패드 위·아래로 스크롤하고
-                        <kbd>A / ×</kbd>로 입장</span
-                    >
-                    <span>왼쪽 스틱</span><span>카메라 방향과 높낮이 조절</span>
-                    <span>오른쪽 스틱</span><span>전후 이동과 좌우 회전</span>
-                    <span><kbd>RB / R1</kbd></span
-                    ><span>누른 채 이동하면 달리기</span>
-                    <span><kbd>A / ×</kbd></span
-                    ><span>낚싯줄 던지기·감기</span>
-                    <span><kbd>X / □</kbd></span
-                    ><span>나뭇가지나 돌 줍기, 생선 먹기</span>
-                    <span><kbd>Y / △</kbd></span
-                    ><span>모닥불 피우기</span> <span><kbd>B / ○</kbd></span
-                    ><span>생선 굽기, 창 닫기</span>
-                    <span><kbd>↑</kbd> <kbd>←</kbd> <kbd>→</kbd></span
-                    ><span>따뜻한 한마디, 감사의 춤, 사진 찍기</span>
+                  <span>시작 화면</span><span>스틱 또는 방향 패드 위·아래로 스크롤하고 <kbd><span class="gamepad-symbol">✖</span></kbd>로 입장</span>
+                  <span>왼쪽 스틱</span><span>카메라 기준으로 방향을 바꿔 이동</span>
+                  <span>오른쪽 스틱</span><span>카메라 방향과 높낮이 조절</span>
+                  <span><kbd>LT / L2</kbd></span><span>누른 채 이동하면 달리기</span>
+                  <span><kbd><span class="gamepad-symbol">✖</span></kbd></span><span>낚싯줄 던지기·감기</span>
+                  <span><kbd><span class="gamepad-symbol square">■</span></kbd></span><span>나뭇가지나 돌 줍기, 생선 먹기</span>
+                  <span><kbd><span class="gamepad-symbol triangle">▲</span></kbd></span><span>모닥불 피우기</span>
+                  <span><kbd><span class="gamepad-symbol circle">●</span></kbd></span><span>생선 굽기 또는 창 닫기</span>
+                  <span>방향 패드</span><span>앞뒤·좌우 이동</span>
+                  <span><kbd>RB / R1</kbd></span><span>따뜻한 한마디 건네기</span>
+                  <span><kbd>RT / R2</kbd> + 오른쪽 스틱</span><span>트리거를 누른 채 스틱을 위로 밀면 확대, 아래로 밀면 축소</span>
+                  <span><kbd>LB / L1</kbd></span><span>감사의 춤</span>
                 </div>
                 <h3 class="control-title">키보드와 마우스 조작</h3>
                 <div class="keys">
@@ -4415,45 +4421,39 @@
                     $("bagbtn").setAttribute("aria-expanded", String(open));
                 });
 
-                const gamepadCast = { index: 0, label: "A / ×" };
-                const gamepadKindWord = { index: 12, label: "방향 패드 ↑" };
-                const gamepadPhoto = { index: 15, label: "방향 패드 →" };
-                $("kind-shortcut").textContent = gamepadKindWord.label;
-                $("photo-shortcut").textContent = gamepadPhoto.label;
+                function renderShortcut(label) {
+                  const shapes = { '■': 'square', '▲': 'triangle', '●': 'circle' };
+                  return esc(label).replace(/[✖■▲●]/g, symbol =>
+                    '<span class="gamepad-symbol ' + (shapes[symbol] ?? '') + '">' + symbol + '</span>'
+                  );
+                }
+
+                const gamepadCast = { index: 0, label: '✖' };
+                const gamepadKindWord = { index: 5, label: 'RB / R1' };
+                $('kind-shortcut').textContent = gamepadKindWord.label;
                 const gamepadPhotoPanel = {
-                    share: { index: 3, label: "Y / △" },
-                    save: { index: 2, label: "X / □" },
-                    close: { index: 1, label: "B / ○" },
+                  share: { index: 3, label: '▲' },
+                  save: { index: 2, label: '■' },
+                  close: { index: 1, label: '●' }
                 };
-                for (const [action, binding] of Object.entries(
-                    gamepadPhotoPanel,
-                )) {
-                    $("photo-" + action + "-shortcut").textContent =
-                        binding.label;
+                for (const [action, binding] of Object.entries(gamepadPhotoPanel)) {
+                  $('photo-' + action + '-shortcut').innerHTML = renderShortcut(binding.label);
                 }
                 const gamepadActions = {
-                    E: { index: 2, label: "X / □" },
-                    B: { index: 3, label: "Y / △" },
-                    G: { index: 1, label: "B / ○" },
-                    T: { index: 14, label: "방향 패드 ←" },
+                  E: { index: 2, label: '■' },
+                  B: { index: 3, label: '▲' },
+                  G: { index: 1, label: '●' },
+                  T: { index: 4, label: 'LB / L1' }
                 };
-                let inputMode = isTouch ? "touch" : "keyboard";
+                let inputMode = isTouch ? 'touch' : 'keyboard';
                 let nonGamepadMode = inputMode;
 
                 function setInputMode(mode) {
-                    if (mode !== "gamepad") nonGamepadMode = mode;
-                    if (mode === inputMode) return;
-                    inputMode = mode;
-                    document.body.classList.toggle(
-                        "gamepad",
-                        mode === "gamepad",
-                    );
-                    $("photobtn").title =
-                        mode === "gamepad"
-                            ? "사진 찍기 (" + gamepadPhoto.label + ")"
-                            : mode === "keyboard"
-                              ? "사진 찍기 (P)"
-                              : "사진 찍기";
+                  if (mode !== 'gamepad') nonGamepadMode = mode;
+                  if (mode === inputMode) return;
+                  inputMode = mode;
+                  document.body.classList.toggle('gamepad', mode === 'gamepad');
+                  $('photobtn').title = mode === 'keyboard' ? '사진 찍기 (P)' : '사진 찍기';
                 }
 
                 addEventListener(
@@ -4519,120 +4519,89 @@
                 let previousButtons = [];
 
                 function readGamepad() {
-                    try {
-                        return Array.from(navigator.getGamepads?.() ?? []).find(
-                            (pad) =>
-                                pad?.connected && pad.mapping === "standard",
-                        );
-                    } catch {
-                        // Embedded browsers can block gamepad access.
-                        return null;
-                    }
+                  try {
+                    return Array.from(navigator.getGamepads?.() ?? []).find(pad => pad?.connected && pad.mapping === 'standard');
+                  } catch {
+                    // Embedded browsers can block gamepad access.
+                    return null;
+                  }
+                }
+
+                async function rumbleGamepad(duration, weakMagnitude, strongMagnitude) {
+                  if (inputMode !== 'gamepad' || document.hidden || !document.hasFocus()) return;
+                  try {
+                    await readGamepad()?.vibrationActuator?.playEffect?.('dual-rumble', {
+                      duration, weakMagnitude, strongMagnitude
+                    });
+                  } catch {
+                    // Haptics availability depends on the browser and controller.
+                  }
                 }
 
                 function stickAxis(value = 0) {
-                    const deadZone = 0.18;
-                    return (
-                        Math.sign(value) *
-                        Math.max(
-                            0,
-                            (Math.abs(value) - deadZone) / (1 - deadZone),
-                        )
-                    );
+                  const deadZone = 0.18;
+                  return Math.sign(value) * Math.max(0, (Math.abs(value) - deadZone) / (1 - deadZone));
                 }
 
                 function updateGamepad(dt) {
-                    const pad = readGamepad();
-                    const buttons =
-                        pad?.buttons.map((button) => button.pressed) ?? [];
-                    const samePad =
-                        pad &&
-                        previousPad?.index === pad.index &&
-                        previousPad.id === pad.id;
-                    const lastButtons = previousButtons;
-                    const justPressed = (index) =>
-                        samePad && buttons[index] && !lastButtons[index];
-                    previousPad = pad;
-                    previousButtons = buttons;
+                  const pad = readGamepad();
+                  const buttons = pad?.buttons.map(button => button.pressed) ?? [];
+                  const samePad = pad && previousPad?.index === pad.index && previousPad.id === pad.id;
+                  const lastButtons = previousButtons;
+                  const justPressed = index => samePad && buttons[index] && !lastButtons[index];
+                  previousPad = pad;
+                  previousButtons = buttons;
 
-                    if (!pad) {
-                        if (inputMode === "gamepad")
-                            setInputMode(nonGamepadMode);
-                        return;
-                    }
-                    if (document.hidden || !document.hasFocus()) return;
-                    const lookX = stickAxis(pad.axes[0]);
-                    const lookY = stickAxis(pad.axes[1]);
-                    const walkX = stickAxis(pad.axes[2]);
-                    const walkY = stickAxis(pad.axes[3]);
-                    if (
-                        lookX ||
-                        lookY ||
-                        walkX ||
-                        walkY ||
-                        buttons.some(
-                            (down, index) =>
-                                down && (!samePad || !lastButtons[index]),
-                        )
-                    ) {
-                        setInputMode("gamepad");
-                    }
-                    if (!entered) {
-                        const dpadY =
-                            Number(!!buttons[13]) - Number(!!buttons[12]);
-                        $("welcome").scrollTop +=
-                            (dpadY || lookY || walkY) * 520 * dt;
-                        if (
-                            justPressed(gamepadCast.index) &&
-                            $("enter").getClientRects().length
-                        )
-                            enterLake();
-                        return;
-                    }
+                  if (!pad) {
+                    if (inputMode === 'gamepad') setInputMode(nonGamepadMode);
+                    return;
+                  }
+                  if (document.hidden || !document.hasFocus()) return;
+                  const walkX = stickAxis(pad.axes[0]);
+                  const walkY = stickAxis(pad.axes[1]);
+                  const lookX = stickAxis(pad.axes[2]);
+                  const lookY = stickAxis(pad.axes[3]);
+                  if (lookX || lookY || walkX || walkY || buttons.some((down, index) => down && (!samePad || !lastButtons[index]))) {
+                    setInputMode('gamepad');
+                  }
+                  const dpadY = Number(!!buttons[13]) - Number(!!buttons[12]);
+                  if (!entered) {
+                    $('welcome').scrollTop += (dpadY || lookY || walkY) * 520 * dt;
+                    if (justPressed(gamepadCast.index) && $('enter').getClientRects().length) enterLake();
+                    return;
+                  }
 
-                    if (!$("photo").hidden) {
-                        if (justPressed(gamepadPhotoPanel.close.index))
-                            closePhoto();
-                        else if (justPressed(gamepadPhotoPanel.save.index))
-                            savePhoto();
-                        else if (
-                            justPressed(gamepadPhotoPanel.share.index) &&
-                            !$("photo-share").hidden
-                        )
-                            sharePhoto(true);
-                        return;
-                    }
+                  if (!$('photo').hidden) {
+                    if (justPressed(gamepadPhotoPanel.close.index)) closePhoto();
+                    else if (justPressed(gamepadPhotoPanel.save.index)) savePhoto();
+                    else if (justPressed(gamepadPhotoPanel.share.index) && !$('photo-share').hidden) sharePhoto(true);
+                    return;
+                  }
 
-                    if (!$("leave").hidden || !$("cust").hidden) {
-                        if (justPressed(1)) {
-                            closeLeave();
-                            openCust(false);
-                        }
-                        return;
+                  if (!$('leave').hidden || !$('cust').hidden) {
+                    if (justPressed(1)) {
+                      closeLeave();
+                      openCust(false);
                     }
-                    if (document.activeElement?.tagName === "INPUT") return;
+                    return;
+                  }
+                  if (document.activeElement?.tagName === 'INPUT') return;
 
-                    if (justPressed(gamepadCast.index)) action();
-                    for (const [key, binding] of Object.entries(
-                        gamepadActions,
-                    )) {
-                        if (justPressed(binding.index)) runAction(key);
-                    }
-                    if (justPressed(gamepadKindWord.index)) sayKindWord();
-                    if (justPressed(gamepadPhoto.index)) {
-                        takePhoto();
-                        return;
-                    }
+                  if (justPressed(gamepadCast.index)) action();
+                  for (const [key, binding] of Object.entries(gamepadActions)) {
+                    if (justPressed(binding.index)) runAction(key);
+                  }
+                  if (justPressed(gamepadKindWord.index)) sayKindWord();
 
-                    const looking = !!(lookX || lookY);
-                    cam.orbit -= lookX * 2.4 * dt;
+                  const looking = !!(lookX || lookY);
+                  cam.orbit -= lookX * 2.4 * dt;
+                  if (buttons[7]) {
+                    cam.dist = clamp(cam.dist * Math.exp(lookY * 1.5 * dt), 3.2, 16);
+                  } else {
                     cam.pitch = clamp(cam.pitch + lookY * 1.5 * dt, 0.08, 1.25);
-                    return {
-                        fwd: -walkY,
-                        turn: -walkX,
-                        running: !!buttons[5],
-                        looking,
-                    };
+                  }
+                  const strafe = Number(!!buttons[15]) - Number(!!buttons[14]);
+                  return { walkX, walkY, fwd: -dpadY, strafe, running: !!buttons[6], looking };
                 }
 
                 // camera: always behind the character, looking the way they face
@@ -4967,6 +4936,7 @@
                             "sys",
                         );
                     } else {
+                        rumbleGamepad(180, 0.35, 0.25);
                         me.caught++;
                         if (!me.best || f.wt > me.best.wt)
                             me.best = { n: f.n, wt: f.wt };
@@ -5048,6 +5018,7 @@
                             F.phase = "bite";
                             F.t = 0;
                             ripple(F.bobber.x, F.bobber.z);
+                            rumbleGamepad(90, 0.45, 0.08);
                         }
                     } else if (F.phase === "bite") {
                         F.bobber.y = -0.22 + Math.sin(F.t * 18) * 0.08;
@@ -5086,7 +5057,7 @@
                             : inputMode === "touch"
                               ? "던지기"
                               : "Space";
-                    const k = "<kbd>" + key + "</kbd>";
+                    const k = "<kbd>" + renderShortcut(key) + "</kbd>";
                     if (F.phase === "bite")
                         setPrompt(
                             "입질이 왔어요! " + k + " 버튼으로 감기",
@@ -5365,7 +5336,7 @@
                                   : "";
                         b.innerHTML =
                             esc(a.label) +
-                            (key ? " <kbd>" + esc(key) + "</kbd>" : "");
+                            (key ? " <kbd>" + renderShortcut(key) + "</kbd>" : "");
                         tapify(b, () => runAction(a.key));
                         actsEl.appendChild(b);
                     }
@@ -6246,56 +6217,42 @@
                             turn -= 1;
                     }
                     const controls = updateGamepad(dt);
-                    if (controls?.fwd || controls?.turn) {
-                        clearTarget();
-                        fwd ||= controls.fwd;
-                        turn ||= controls.turn;
-                    }
-                    if (turn) {
-                        me.yaw += turn * 2.4 * dt;
-                        cam.yaw = me.yaw;
-                    }
-                    let running =
-                        keys.has("ShiftLeft") ||
-                        keys.has("ShiftRight") ||
-                        !!controls?.running;
+                    const strafe = controls?.strafe ?? 0;
+                    const stickMoving = !!(controls?.walkX || controls?.walkY);
+                    fwd ||= controls?.fwd ?? 0;
+                    if (turn) { me.yaw += turn * 2.4 * dt; cam.yaw = me.yaw; }
+                    let running = keys.has('ShiftLeft') || keys.has('ShiftRight') || !!controls?.running;
                     let moving = false;
-                    const wade = swimming(me.x, me.z)
-                        ? 0.55
-                        : onWater(me.x, me.z)
-                          ? 0.7
-                          : 1; // water is slow going: wading a little, swimming more
-                    const step = (dx, dz) => {
-                        me.x += dx;
-                        me.z += dz;
-                    }; // campfires, the dock and the water are all walk-through
-                    if (fwd) {
-                        clearTarget();
-                        const speed = (running ? 7.2 : 4.0) * wade * fwd;
-                        step(
-                            Math.sin(me.yaw) * speed * dt,
-                            Math.cos(me.yaw) * speed * dt,
-                        );
-                        moving = true;
+                    const wade = swimming(me.x, me.z) ? 0.55 : onWater(me.x, me.z) ? 0.7 : 1; // water is slow going: wading a little, swimming more
+                    const step = (dx, dz) => { me.x += dx; me.z += dz; }; // campfires, the dock and the water are all walk-through
+                    if (stickMoving) {
+                      clearTarget();
+                      const viewYaw = cam.yaw + cam.orbit;
+                      const sin = Math.sin(viewYaw), cos = Math.cos(viewYaw);
+                      const dx = -sin * controls.walkY - cos * controls.walkX;
+                      const dz = -cos * controls.walkY + sin * controls.walkX;
+                      const distance = (running ? 7.2 : 4.0) * wade * dt / Math.max(1, Math.hypot(dx, dz));
+                      step(dx * distance, dz * distance);
+                      me.yaw = angleLerp(me.yaw, Math.atan2(dx, dz), 1 - Math.pow(0.0005, dt));
+                      // Keep the player's view steady while the character turns toward the stick.
+                      cam.yaw = me.yaw;
+                      cam.orbit = viewYaw - cam.yaw;
+                      moving = true;
+                    } else if (fwd || strafe) {
+                      clearTarget();
+                      const distance = (running ? 7.2 : 4.0) * wade * dt / Math.max(1, Math.hypot(fwd, strafe));
+                      const sin = Math.sin(me.yaw), cos = Math.cos(me.yaw);
+                      step((sin * fwd - cos * strafe) * distance, (cos * fwd + sin * strafe) * distance);
+                      moving = true;
                     } else if (moveTarget) {
-                        const dx = moveTarget.x - me.x,
-                            dz = moveTarget.z - me.z,
-                            d = Math.hypot(dx, dz);
-                        if (d < 0.2) clearTarget();
-                        else {
-                            running = d > 10;
-                            const speed = Math.min(
-                                (running ? 7.2 : 4.0) * wade,
-                                d / dt,
-                            );
-                            step((dx / d) * speed * dt, (dz / d) * speed * dt);
-                            me.yaw = angleLerp(
-                                me.yaw,
-                                Math.atan2(dx, dz),
-                                1 - Math.pow(0.002, dt),
-                            );
-                            moving = true;
-                        }
+                      const dx = moveTarget.x - me.x, dz = moveTarget.z - me.z, d = Math.hypot(dx, dz);
+                      if (d < 0.2) clearTarget();
+                      else {
+                        running = d > 10;
+                        const speed = Math.min((running ? 7.2 : 4.0) * wade, d / dt);
+                        step(dx / d * speed * dt, dz / d * speed * dt);
+                        me.yaw = angleLerp(me.yaw, Math.atan2(dx, dz), 1 - Math.pow(0.002, dt)); moving = true;
+                      }
                     }
                     // crossing a tile edge: wrap to the opposite side and carry the camera and any walk target along, so nothing visibly jumps
                     const wx = wrapCoord(me.x),
@@ -6407,7 +6364,7 @@
                     );
                     if (!cam.held && !controls?.looking && moving) {
                         const follow = 1 - Math.pow(0.03, dt);
-                        cam.orbit = lerp(cam.orbit, 0, follow);
+                        if (!stickMoving) cam.orbit = lerp(cam.orbit, 0, follow);
                         const maxFollowPitch = cam.pitchBase + 0.23;
                         if (cam.pitch > maxFollowPitch) {
                             cam.pitch = lerp(cam.pitch, maxFollowPitch, follow);

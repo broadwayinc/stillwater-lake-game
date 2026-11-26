@@ -1509,8 +1509,11 @@
             </div>
         </dialog>
         <dialog id="coupon" aria-labelledby="coupon-title">
-            <h2 id="coupon-title">You caught something special!</h2>
-            <p>Congratulations! <br />You caught a free Skapi Standard pass.</p>
+            <h2 id="coupon-title">Congratulations!</h2>
+            <p>
+                You caught a free Skapi Standard pass.<br />
+                Use the code below to claim your pass.
+            </p>
             <div class="coupon-ticket">
                 <strong>Free Skapi Standard pass</strong
                 ><code id="coupon-code"></code>
@@ -3312,7 +3315,8 @@
                     if (e < -0.02)
                         sunDir
                             .set(-cosA * 0.8, Math.max(0.3, -e), -0.5)
-                            .normalize(); // moon, opposite the sun
+                            .normalize();
+                    // moon, opposite the sun
                     else sunDir.set(cosA, Math.max(e, 0.04), -0.45).normalize();
                     let i = 0;
                     while (i < STOPS.length - 2 && e > STOPS[i + 1].e) i++;
@@ -5258,7 +5262,7 @@
                     F.t = 0;
                 }
                 // Demo inventory is scoped to this browser. The production service will own stock and issuance.
-                const COUPON_CHANCE = 0.05;
+                const COUPON_CHANCE = 0.33;
                 const COUPON_LIMIT = 100;
                 let couponState;
                 try {
@@ -5285,7 +5289,6 @@
                     : [];
                 if (couponState.code) savedCodes.push(couponState.code);
                 couponState.codes = [...new Set(savedCodes)];
-
 
                 let couponCelebration = null;
 

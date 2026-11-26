@@ -1127,6 +1127,96 @@
                     animation: none;
                 }
             }
+            #coupon {
+                width: min(420px, calc(100% - 32px));
+                box-sizing: border-box;
+                max-height: calc(100dvh - 32px);
+                overflow: auto;
+                padding: 30px;
+                border: 1px solid var(--sun);
+                border-radius: 20px;
+                background: #112d35;
+                color: var(--paper);
+                text-align: center;
+                box-shadow: 0 0 90px #f2b35a40;
+            }
+            #coupon::backdrop {
+                background: #06181ed9;
+            }
+            #coupon h2 {
+                font-size: 28px;
+                margin: 12px 0;
+            }
+            #coupon p {
+                color: var(--drift);
+            }
+            #coupon .coupon-ticket {
+                border: 1px dashed var(--sun);
+                padding: 20px 12px;
+                border-radius: 12px;
+                margin: 22px 0;
+                background: #f2b35a0d;
+            }
+            #coupon-code {
+                display: block;
+                font: 700 21px monospace;
+                letter-spacing: 0.1em;
+                color: var(--sun);
+                margin-top: 12px;
+                overflow-wrap: anywhere;
+            }
+            #coupon label {
+                display: block;
+                text-align: left;
+                margin-bottom: 8px;
+            }
+            #coupon input,
+            #coupon button {
+                box-sizing: border-box;
+                width: 100%;
+                font: inherit;
+                border-radius: 9px;
+                padding: 12px;
+            }
+            #coupon input {
+                background: #ffffff0c;
+                border: 1px solid var(--glass-edge);
+                color: var(--paper);
+            }
+            #coupon button {
+                cursor: pointer;
+                margin-top: 12px;
+                border: 0;
+                background: var(--sun);
+                color: var(--ink);
+                font-weight: 700;
+            }
+            #coupon #coupon-close {
+                background: transparent;
+                color: var(--paper);
+                border: 1px solid var(--glass-edge);
+            }
+            #coupon .coupon-demo {
+                font-size: 12px;
+            }
+            #coupon[open] {
+                animation: coupon-card-in 0.4s ease-out;
+            }
+            @keyframes coupon-card-in {
+                from {
+                    opacity: 0;
+                    transform: translateY(24px) scale(0.96);
+                }
+                to {
+                    opacity: 1;
+                    transform: none;
+                }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                #coupon[open] {
+                    animation: none;
+                }
+            }
         </style>
     </head>
     <body>
@@ -1334,6 +1424,31 @@
                 <span>동작 버튼</span
                 ><span>줍거나 굽거나 먹을 수 있을 때 표시</span>
             </div>
+        </dialog>
+        <dialog id="coupon" aria-labelledby="coupon-title">
+            <h2 id="coupon-title">특별한 행운을 낚았어요!</h2>
+            <p>축하해요! <br />Skapi Standard 무료 이용권을 낚았어요.</p>
+            <div class="coupon-ticket">
+                <strong>Skapi Standard 무료 이용권</strong
+                ><code id="coupon-code"></code>
+            </div>
+            <form id="coupon-form">
+                <label for="coupon-email">이메일 주소</label>
+                <input
+                    id="coupon-email"
+                    type="email"
+                    required
+                    maxlength="254"
+                    autocomplete="email"
+                    placeholder="you@example.com"
+                />
+                <button type="submit">이메일로 쿠폰 받기</button>
+            </form>
+            <p id="coupon-status" role="status"></p>
+            <p class="coupon-demo">
+                행사 시연용 쿠폰입니다. 이메일은 실제로 발송되지 않아요.
+            </p>
+            <button id="coupon-close" type="button">호수로 돌아가기</button>
         </dialog>
         <div id="flash"></div>
         <div id="photo" hidden>
@@ -4423,7 +4538,7 @@
                 ];
                 let lastKind = 0;
                 function sayKindWord() {
-                    if (!entered) return;
+                    if (!entered || couponCelebration) return;
                     const now = performance.now();
                     if (now - lastKind < 1500) return;
                     lastKind = now;
@@ -4494,7 +4609,7 @@
                     if (e.target.tagName === "INPUT") return;
                     if (!["Control", "Alt", "Meta"].includes(e.key))
                         setInputMode("keyboard");
-                    if ($("help").open) return;
+                    if ($("help").open || $("coupon").open || couponCelebration) return;
                     if (!$("photo").hidden || !$("leave").hidden) {
                         if (e.code === "Escape") {
                             closePhoto();
@@ -4569,74 +4684,129 @@
                 }
 
                 function updateGamepad(dt) {
-                  const pad = readGamepad();
-                  const buttons = pad?.buttons.map(button => button.pressed) ?? [];
-                  const samePad = pad && previousPad?.index === pad.index && previousPad.id === pad.id;
-                  const lastButtons = previousButtons;
-                  const justPressed = index => samePad && buttons[index] && !lastButtons[index];
-                  previousPad = pad;
-                  previousButtons = buttons;
+                    const pad = readGamepad();
+                    const buttons =
+                        pad?.buttons.map((button) => button.pressed) ?? [];
+                    const samePad =
+                        pad &&
+                        previousPad?.index === pad.index &&
+                        previousPad.id === pad.id;
+                    const lastButtons = previousButtons;
+                    const justPressed = (index) =>
+                        samePad && buttons[index] && !lastButtons[index];
+                    previousPad = pad;
+                    previousButtons = buttons;
 
-                  if (!pad) {
-                    if (inputMode === 'gamepad') setInputMode(nonGamepadMode);
-                    return;
-                  }
-                  if (document.hidden || !document.hasFocus()) return;
-                  const walkX = stickAxis(pad.axes[0]);
-                  const walkY = stickAxis(pad.axes[1]);
-                  const lookX = stickAxis(pad.axes[2]);
-                  const lookY = stickAxis(pad.axes[3]);
-                  if (lookX || lookY || walkX || walkY || buttons.some((down, index) => down && (!samePad || !lastButtons[index]))) {
-                    setInputMode('gamepad');
-                  }
-                  const dpadY = Number(!!buttons[13]) - Number(!!buttons[12]);
-                  if (!entered) {
-                    $('welcome').scrollTop += (dpadY || lookY || walkY) * 520 * dt;
-                    if (justPressed(gamepadCast.index) && $('enter').getClientRects().length) enterLake();
-                    return;
-                  }
-
-                  if ($('help').open) {
-                    if (justPressed(9) || justPressed(1)) $('help').close();
-                    else $('help').scrollTop += (dpadY || walkY || lookY) * 520 * dt;
-                    return;
-                  }
-
-                  if (!$('photo').hidden) {
-                    if (justPressed(gamepadPhotoPanel.close.index)) closePhoto();
-                    else if (justPressed(gamepadPhotoPanel.save.index)) savePhoto();
-                    else if (justPressed(gamepadPhotoPanel.share.index) && !$('photo-share').hidden) sharePhoto(true);
-                    return;
-                  }
-
-                  if (!$('leave').hidden || !$('cust').hidden) {
-                    if (justPressed(1)) {
-                      closeLeave();
-                      openCust(false);
+                    if (!pad) {
+                        if (inputMode === "gamepad")
+                            setInputMode(nonGamepadMode);
+                        return;
                     }
-                    return;
-                  }
-                  if (justPressed(9)) {
-                    openHelp();
-                    return;
-                  }
-                  if (document.activeElement?.tagName === 'INPUT') return;
+                    if (document.hidden || !document.hasFocus()) return;
+                    const walkX = stickAxis(pad.axes[0]);
+                    const walkY = stickAxis(pad.axes[1]);
+                    const lookX = stickAxis(pad.axes[2]);
+                    const lookY = stickAxis(pad.axes[3]);
+                    if (
+                        lookX ||
+                        lookY ||
+                        walkX ||
+                        walkY ||
+                        buttons.some(
+                            (down, index) =>
+                                down && (!samePad || !lastButtons[index]),
+                        )
+                    ) {
+                        setInputMode("gamepad");
+                    }
+                    if (couponCelebration) return;
+                    const dpadY = Number(!!buttons[13]) - Number(!!buttons[12]);
+                    if (!entered) {
+                        $("welcome").scrollTop +=
+                            (dpadY || lookY || walkY) * 520 * dt;
+                        if (
+                            justPressed(gamepadCast.index) &&
+                            $("enter").getClientRects().length
+                        )
+                            enterLake();
+                        return;
+                    }
 
-                  if (justPressed(gamepadCast.index)) action();
-                  for (const [key, binding] of Object.entries(gamepadActions)) {
-                    if (justPressed(binding.index)) runAction(key);
-                  }
-                  if (justPressed(gamepadKindWord.index)) sayKindWord();
+                    if ($("coupon").open) {
+                        if (justPressed(1)) $("coupon").close();
+                        else
+                            $("coupon").scrollTop +=
+                                (dpadY || walkY || lookY) * 520 * dt;
+                        return;
+                    }
 
-                  const looking = !!(lookX || lookY);
-                  cam.orbit -= lookX * 2.4 * dt;
-                  if (buttons[7]) {
-                    cam.dist = clamp(cam.dist * Math.exp(lookY * 1.5 * dt), 3.2, 16);
-                  } else {
-                    cam.pitch = clamp(cam.pitch + lookY * 1.5 * dt, 0.08, 1.25);
-                  }
-                  const strafe = Number(!!buttons[15]) - Number(!!buttons[14]);
-                  return { walkX, walkY, fwd: -dpadY, strafe, running: !!buttons[6], looking };
+                    if ($("help").open) {
+                        if (justPressed(9) || justPressed(1)) $("help").close();
+                        else
+                            $("help").scrollTop +=
+                                (dpadY || walkY || lookY) * 520 * dt;
+                        return;
+                    }
+
+                    if (!$("photo").hidden) {
+                        if (justPressed(gamepadPhotoPanel.close.index))
+                            closePhoto();
+                        else if (justPressed(gamepadPhotoPanel.save.index))
+                            savePhoto();
+                        else if (
+                            justPressed(gamepadPhotoPanel.share.index) &&
+                            !$("photo-share").hidden
+                        )
+                            sharePhoto(true);
+                        return;
+                    }
+
+                    if (!$("leave").hidden || !$("cust").hidden) {
+                        if (justPressed(1)) {
+                            closeLeave();
+                            openCust(false);
+                        }
+                        return;
+                    }
+                    if (justPressed(9)) {
+                        openHelp();
+                        return;
+                    }
+                    if (document.activeElement?.tagName === "INPUT") return;
+
+                    if (justPressed(gamepadCast.index)) action();
+                    for (const [key, binding] of Object.entries(
+                        gamepadActions,
+                    )) {
+                        if (justPressed(binding.index)) runAction(key);
+                    }
+                    if (justPressed(gamepadKindWord.index)) sayKindWord();
+
+                    const looking = !!(lookX || lookY);
+                    cam.orbit -= lookX * 2.4 * dt;
+                    if (buttons[7]) {
+                        cam.dist = clamp(
+                            cam.dist * Math.exp(lookY * 1.5 * dt),
+                            3.2,
+                            16,
+                        );
+                    } else {
+                        cam.pitch = clamp(
+                            cam.pitch + lookY * 1.5 * dt,
+                            0.08,
+                            1.25,
+                        );
+                    }
+                    const strafe =
+                        Number(!!buttons[15]) - Number(!!buttons[14]);
+                    return {
+                        walkX,
+                        walkY,
+                        fwd: -dpadY,
+                        strafe,
+                        running: !!buttons[6],
+                        looking,
+                    };
                 }
 
                 // camera: always behind the character, looking the way they face
@@ -4702,6 +4872,7 @@
                     if (a && a !== document.body && a.blur) a.blur();
                 } // the canvas swallows the default focus change, so put the keyboard away explicitly
                 function gDown(id, x, y) {
+                    if (couponCelebration) return;
                     dropFocus();
                     pointers.set(id, { x, y });
                     if (pointers.size === 1)
@@ -4903,7 +5074,7 @@
                     });
                 }
                 function openHelp() {
-                  if (!entered || $('help').open) return;
+                  if (!entered || $('help').open || couponCelebration) return;
                   keys.clear();
                   clearTarget();
                   $('help').showModal();
@@ -4922,6 +5093,7 @@
                     return nearWater(me.x, me.z);
                 }
                 function action() {
+                    if (couponCelebration || $("coupon").open) return;
                     if (F.phase === "idle") {
                         if (!canFish()) {
                             setPrompt("낚싯줄을 던지려면 물가로 가까이 가세요");
@@ -4965,7 +5137,224 @@
                     F.phase = "reel";
                     F.t = 0;
                 }
+                // Demo inventory is scoped to this browser. The production service will own stock and issuance.
+                const COUPON_CHANCE = 0.05;
+                const COUPON_LIMIT = 100;
+                let couponState;
+                try {
+                    couponState = JSON.parse(
+                        store("lake.coupon-demo.v1") || "null",
+                    );
+                } catch {
+                    couponState = null;
+                }
+                if (
+                    !couponState ||
+                    !Number.isInteger(couponState.issued) ||
+                    couponState.issued < 0 ||
+                    couponState.issued > COUPON_LIMIT ||
+                    typeof couponState.code !== "string" ||
+                    !/^(?:[A-Z2-9]{12})?$/.test(couponState.code)
+                ) {
+                    couponState = { issued: 0, code: "" };
+                }
+                const validCoupon = (code) =>
+                    typeof code === "string" && /^[A-Z2-9]{12}$/.test(code);
+                const savedCodes = Array.isArray(couponState.codes)
+                    ? couponState.codes.filter(validCoupon)
+                    : [];
+                if (couponState.code) savedCodes.push(couponState.code);
+                couponState.codes = [...new Set(savedCodes)];
+
+
+                let couponCelebration = null;
+
+                function startCouponCelebration() {
+                    keys.clear();
+                    clearTarget();
+                    standUp();
+                    me.danceUntil = 0;
+                    pointers.clear();
+                    cam.held = false;
+                    const confetti = new THREE.Group();
+                    const geometry = new THREE.PlaneGeometry(0.09, 0.16);
+                    const colors = [0xf2b35a, 0x9ad9a3, 0xa9c4dc, 0xf5b8ce];
+                    const materials = colors.map(
+                        (color) =>
+                            new THREE.MeshBasicMaterial({
+                                color,
+                                side: THREE.DoubleSide,
+                            }),
+                    );
+                    for (let i = 0; i < 72; i++) {
+                        const piece = new THREE.Mesh(
+                            geometry,
+                            materials[i % materials.length],
+                        );
+                        piece.position.set(
+                            (Math.random() - 0.5) * 2,
+                            0.7,
+                            (Math.random() - 0.5) * 0.4,
+                        );
+                        piece.userData.velocity = new THREE.Vector3(
+                            (Math.random() - 0.5) * 3,
+                            3 + Math.random() * 3,
+                            Math.random() - 0.5,
+                        );
+                        piece.rotation.set(
+                            Math.random() * Math.PI,
+                            Math.random() * Math.PI,
+                            0,
+                        );
+                        confetti.add(piece);
+                    }
+                    confetti.position.set(
+                        me.x - Math.sin(me.yaw) * 0.8,
+                        Math.max(me.y, 0),
+                        me.z - Math.cos(me.yaw) * 0.8,
+                    );
+                    scene.add(confetti);
+                    couponCelebration = {
+                        elapsed: 0,
+                        confetti,
+                        geometry,
+                        materials,
+                        camera: camera.position.clone(),
+                        target: camTarget.clone(),
+                    };
+                    rumbleGamepad(450, 0.6, 0.4);
+                }
+
+                function finishCouponCelebration(showCard = true) {
+                    if (!couponCelebration) return;
+                    const { confetti, geometry, materials } = couponCelebration;
+                    scene.remove(confetti);
+                    geometry.dispose();
+                    materials.forEach((material) => material.dispose());
+                    couponCelebration = null;
+                    if (showCard && entered) openCoupon();
+                }
+
+                function animateCouponCelebration(dt) {
+                    if (!couponCelebration) return;
+                    const effect = couponCelebration;
+                    effect.elapsed += dt;
+                    const t = effect.elapsed;
+                    const reducedMotion = matchMedia(
+                        "(prefers-reduced-motion: reduce)",
+                    ).matches;
+                    const jump = reducedMotion
+                        ? 0
+                        : Math.sin(clamp((t - 0.9) / 0.8, 0, 1) * Math.PI) *
+                          0.65;
+                    myChar.g.position.y = Math.max(me.y, 0) + jump;
+                    const spread = smooth(0.25, 0.75, t);
+                    const cycle = Math.max(0, t - 0.75);
+                    const lift = reducedMotion
+                        ? smooth(0.85, 1.35, t)
+                        : (1 - Math.cos((cycle * Math.PI * 2) / 1.1)) / 2;
+                    const raisedArm = (Math.PI / 2) * spread + 1.05 * lift;
+                    myChar.armL.rotation.z = -raisedArm;
+                    myChar.armR.rotation.z = raisedArm;
+                    myChar.armL.rotation.x = myChar.armR.rotation.x =
+                        -0.15 * lift;
+                    myChar.elbowL.rotation.x = myChar.elbowR.rotation.x =
+                        -0.15 * lift;
+                    myChar.rod.visible = false;
+                    const blend = reducedMotion ? 1 : smooth(0, 1.1, t);
+                    const startX = effect.camera.x - me.x,
+                        startZ = effect.camera.z - me.z;
+                    const startAngle = Math.atan2(startX, startZ);
+                    const angleDelta =
+                        ((((me.yaw - startAngle + Math.PI) % TAU) + TAU) %
+                            TAU) -
+                        Math.PI;
+                    const orbitAngle = startAngle + angleDelta * blend;
+                    const radius = lerp(
+                        Math.max(Math.hypot(startX, startZ), 3.2),
+                        4.8,
+                        blend,
+                    );
+                    const front = new THREE.Vector3(
+                        me.x + Math.sin(orbitAngle) * radius,
+                        lerp(effect.camera.y, Math.max(me.y, 0) + 2.1, blend),
+                        me.z + Math.cos(orbitAngle) * radius,
+                    );
+                    front.y = Math.max(
+                        front.y,
+                        groundY(front.x, front.z) + 0.6,
+                    );
+                    camera.position.copy(front);
+                    const target = new THREE.Vector3(
+                        me.x,
+                        Math.max(me.y, 0) + 1.05,
+                        me.z,
+                    );
+                    camera.lookAt(effect.target.clone().lerp(target, blend));
+                    effect.confetti.visible = !reducedMotion && t > 0.9;
+                    if (t > 0.9) {
+                        for (const piece of effect.confetti.children) {
+                            piece.userData.velocity.y -= dt * 3;
+                            piece.position.addScaledVector(
+                                piece.userData.velocity,
+                                dt,
+                            );
+                            piece.rotation.x += dt * 4;
+                            piece.rotation.z += dt * 3;
+                        }
+                    }
+                    if (t >= 3.2) finishCouponCelebration();
+                }
+
+                function openCoupon() {
+                    if (
+                        !couponState.code ||
+                        $("coupon").open ||
+                        couponCelebration
+                    )
+                        return;
+                    keys.clear();
+                    clearTarget();
+                    $("coupon-code").textContent = couponState.code;
+                    $("coupon-status").textContent = "";
+                    $("coupon-email").value = "";
+                    $("coupon").showModal();
+                }
+                function catchCoupon() {
+                    if (
+                        couponState.issued >= COUPON_LIMIT ||
+                        Math.random() >= COUPON_CHANCE
+                    )
+                        return false;
+                    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+                    const bytes = crypto.getRandomValues(new Uint8Array(12));
+                    couponState.code = Array.from(
+                        bytes,
+                        (byte) => alphabet[byte % alphabet.length],
+                    ).join("");
+                    couponState.codes.push(couponState.code);
+                    couponState.issued++;
+                    store("lake.coupon-demo.v1", JSON.stringify(couponState));
+
+                    startCouponCelebration();
+                    return true;
+                }
+                $("coupon-close").addEventListener("click", () =>
+                    $("coupon").close(),
+                );
+                $("coupon-form").addEventListener("submit", (event) => {
+                    event.preventDefault();
+                    if (!$("coupon-form").reportValidity()) return;
+                    $("coupon-status").textContent =
+                        "이메일 접수를 체험했어요. 실제 서비스에서는 입력한 이메일로 쿠폰을 보내드려요.";
+                });
+
                 function landFish() {
+                    if (catchCoupon()) {
+                        if (F.bobber) ripple(F.bobber.x, F.bobber.z);
+                        endFishing();
+                        return;
+                    }
                     const f = rollFish();
                     if (f.r === "junk") {
                         showCard(
@@ -5383,6 +5772,7 @@
                     return a;
                 }
                 function runAction(key) {
+                    if (couponCelebration) return;
                     const a = actions.find((x) => x.key === key);
                     if (a) a.run();
                 }
@@ -6078,6 +6468,7 @@
                     photoUrl = "",
                     photoName = "";
                 function takePhoto() {
+                    if (couponCelebration) return;
                     if (!entered || !$("photo").hidden || !$("leave").hidden)
                         return;
                     if (inApp) {
@@ -6243,6 +6634,8 @@
                 tapify($("enter"), enterLake);
                 // the account ended while the player was away: out of the lake and back to the opening dialog
                 function leaveLake() {
+                    finishCouponCelebration(false);
+                    if ($("coupon").open) $("coupon").close();
                     if ($("help").open) $("help").close();
                     if (F.phase !== "idle") {
                         F.phase = "idle";
@@ -6279,7 +6672,7 @@
                     // movement: forward is wherever the character faces; the camera rides behind
                     let fwd = 0,
                         turn = 0;
-                    if (entered) {
+                    if (entered && !couponCelebration) {
                         if (keys.has("KeyW") || keys.has("ArrowUp")) fwd += 1;
                         if (keys.has("KeyS") || keys.has("ArrowDown")) fwd -= 1;
                         if (keys.has("KeyA") || keys.has("ArrowLeft"))
@@ -6462,6 +6855,7 @@
                         1 - Math.pow(0.0001, dt),
                     );
                     camera.lookAt(camTarget);
+                    animateCouponCelebration(dt);
                     sun.target.position.set(me.x, 0, me.z);
                     sun.position
                         .copy(sunDir)

@@ -1532,7 +1532,7 @@
             </form>
             <p id="coupon-status" role="status"></p>
             <p class="coupon-demo">
-                Event demo. This code is a sample, and no email will be sent.
+                Enter your email address to receive your coupon code.
             </p>
             <button id="coupon-close" type="button">Back to the lake</button>
         </dialog>
@@ -5261,34 +5261,36 @@
                     F.phase = "reel";
                     F.t = 0;
                 }
-                // Demo inventory is scoped to this browser. The production service will own stock and issuance.
-                const COUPON_CHANCE = 0.33;
-                const COUPON_LIMIT = 100;
-                let couponState;
-                try {
-                    couponState = JSON.parse(
-                        store("lake.coupon-demo.v1") || "null",
-                    );
-                } catch {
-                    couponState = null;
+                // Coupon stock is provisioned manually on each event browser.
+                const DEFAULT_COUPON_CHANCE = 0.33;
+                const COUPON_CHANCE_KEY = "lake.coupon-chance.v1";
+
+                function getCouponChance() {
+                    try {
+                        const saved = localStorage.getItem(COUPON_CHANCE_KEY);
+                        if (saved === null || !saved.trim()) return DEFAULT_COUPON_CHANCE;
+                        const chance = Number(saved);
+                        return Number.isFinite(chance) && chance >= 0 && chance <= 1
+                            ? chance : DEFAULT_COUPON_CHANCE;
+                    } catch {
+                        return DEFAULT_COUPON_CHANCE;
+                    }
                 }
-                if (
-                    !couponState ||
-                    !Number.isInteger(couponState.issued) ||
-                    couponState.issued < 0 ||
-                    couponState.issued > COUPON_LIMIT ||
-                    typeof couponState.code !== "string" ||
-                    !/^(?:[A-Z2-9]{12})?$/.test(couponState.code)
-                ) {
-                    couponState = { issued: 0, code: "" };
+                const COUPON_STORAGE_KEY = "lake.coupon-list.v1";
+                const COUPON_INVENTORY_KEY = "lake.coupon-inventory.v1";
+                let couponState = { code: "", codes: [] };
+
+                function readCouponState() {
+                    const saved = JSON.parse(localStorage.getItem(COUPON_STORAGE_KEY) || "null");
+                    if (saved === null) return { code: "", codes: [] };
+                    if (!saved || !Array.isArray(saved.codes) || !saved.codes.every(code => typeof code === "string")) {
+                        throw new Error("Invalid coupon issuance history");
+                    }
+                    return {
+                        code: typeof saved.code === "string" ? saved.code : "",
+                        codes: [...new Set(saved.codes)],
+                    };
                 }
-                const validCoupon = (code) =>
-                    typeof code === "string" && /^[A-Z2-9]{12}$/.test(code);
-                const savedCodes = Array.isArray(couponState.codes)
-                    ? couponState.codes.filter(validCoupon)
-                    : [];
-                if (couponState.code) savedCodes.push(couponState.code);
-                couponState.codes = [...new Set(savedCodes)];
 
                 let couponCelebration = null;
 
@@ -5441,39 +5443,71 @@
                     $("coupon-code").textContent = couponState.code;
                     $("coupon-status").textContent = "";
                     $("coupon-email").value = "";
+                    $("coupon-form").querySelector('button[type="submit"]').disabled = couponSending || couponSentCode === couponState.code;
                     $("coupon").showModal();
                 }
-                function catchCoupon() {
-                    if (
-                        couponState.issued >= COUPON_LIMIT ||
-                        Math.random() >= COUPON_CHANCE
-                    )
+                async function catchCoupon() {
+                    if (Math.random() >= getCouponChance()) return false;
+                    // A Web Lock prevents two tabs from claiming the same local code.
+                    if (!navigator.locks) return false;
+                    try {
+                        return await navigator.locks.request("lake-coupon-issuance", () => {
+                            const state = readCouponState();
+                            const issued = new Set(state.codes);
+                            const inventory = JSON.parse(localStorage.getItem(COUPON_INVENTORY_KEY) || "[]");
+                            if (!Array.isArray(inventory) || !inventory.every(code => typeof code === "string")) return false;
+                            const remaining = [...new Set(inventory)].filter(code => code && !issued.has(code));
+                            if (!remaining.length) return false;
+                            const code = remaining[Math.floor(Math.random() * remaining.length)];
+                            const next = { code, codes: [...state.codes, code] };
+                            // Persist before announcing a win. If storage fails, keep fishing normally.
+                            localStorage.setItem(COUPON_STORAGE_KEY, JSON.stringify(next));
+                            // The issued ledger remains authoritative if this cleanup fails.
+                            try { localStorage.setItem(COUPON_INVENTORY_KEY, JSON.stringify(remaining.filter(value => value !== code))); } catch {}
+                            couponState = next;
+                            startCouponCelebration();
+                            return true;
+                        });
+                    } catch (error) {
+                        console.warn("Coupon issuance unavailable", error);
                         return false;
-                    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-                    const bytes = crypto.getRandomValues(new Uint8Array(12));
-                    couponState.code = Array.from(
-                        bytes,
-                        (byte) => alphabet[byte % alphabet.length],
-                    ).join("");
-                    couponState.codes.push(couponState.code);
-                    couponState.issued++;
-                    store("lake.coupon-demo.v1", JSON.stringify(couponState));
-
-                    startCouponCelebration();
-                    return true;
+                    }
                 }
                 $("coupon-close").addEventListener("click", () =>
                     $("coupon").close(),
                 );
-                $("coupon-form").addEventListener("submit", (event) => {
+                let couponSending = false;
+                let couponSentCode = "";
+                $("coupon-form").addEventListener("submit", async (event) => {
                     event.preventDefault();
-                    if (!$("coupon-form").reportValidity()) return;
-                    $("coupon-status").textContent =
-                        "Demo complete! In the live version, your coupon code will be sent to the email address you entered.";
+                    if (couponSending || couponSentCode === couponState.code || !$("coupon-form").reportValidity()) return;
+                    const code = couponState.code;
+                    if (!code) return;
+                    const email = $("coupon-email").value.trim();
+                    const button = $("coupon-form").querySelector('button[type="submit"]');
+                    couponSending = true;
+                    button.disabled = true;
+                    $("coupon-status").textContent = "Sending your coupon…";
+                    const url = new URL("https://ap22.skapi.dev/tg/ap22aAwOFsBQHQ7deFEc/sendcoupon");
+                    url.searchParams.set("email", email);
+                    url.searchParams.set("code", code);
+                    try {
+                        const response = await fetch(url, { method: "GET", cache: "no-store", referrerPolicy: "no-referrer" });
+                        if (!response.ok) throw new Error("Coupon delivery failed");
+                        couponSentCode = code;
+                        $("coupon-status").textContent = "Your coupon email request was received. Please check your inbox and spam folder.";
+                    } catch {
+                        $("coupon-status").textContent = "We could not confirm delivery. Please check your inbox before trying again.";
+                    } finally {
+                        couponSending = false;
+                        button.disabled = couponSentCode === couponState.code;
+                    }
                 });
 
-                function landFish() {
-                    if (catchCoupon()) {
+                async function landFish() {
+                    // Stop further reel input while a local claim is pending.
+                    endFishing();
+                    if (await catchCoupon()) {
                         if (F.bobber) ripple(F.bobber.x, F.bobber.z);
                         endFishing();
                         return;

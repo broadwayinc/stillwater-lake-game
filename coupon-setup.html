@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>행사 쿠폰 관리</title>
+<style>
+body { margin: 40px auto; padding: 0 24px; max-width: 600px; background: #112d35; color: #fbf5ea; font: 16px/1.6 system-ui, sans-serif; }
+textarea, button, input { box-sizing: border-box; width: 100%; margin: 8px 0 20px; padding: 12px; font: inherit; }
+textarea { height: 200px; }
+button { cursor: pointer; background: #f2b35a; border: 0; border-radius: 8px; }
+a { color: #f2b35a; }
+</style>
+</head>
+<body>
+<h1>행사 쿠폰 관리</h1>
+<h2>당첨 확률</h2>
+<p>같은 브라우저와 주소에서 열린 게임의 다음 추첨부터 적용됩니다. 설정 전 기본값은 33%입니다.</p>
+<form id="chance-form">
+  <label for="chance">당첨 확률 (%)</label>
+  <input id="chance" type="number" min="0" max="100" step="any" required inputmode="decimal" aria-describedby="chance-note">
+  <p id="chance-note">0%는 쿠폰 당첨 중지, 100%는 쿠폰이 남아 있으면 매번 당첨입니다.</p>
+  <button type="submit">확률 저장</button>
+</form>
+<p id="chance-status" role="status"></p>
+<h2>쿠폰 등록</h2>
+<p>게임과 같은 주소의 행사 브라우저에서 등록하세요. 등록한 코드는 이 브라우저에 저장됩니다. 여러 기기에는 서로 다른 코드 묶음을 등록하세요.</p>
+<p>기존 당첨 기록은 유지됩니다. 이미 발급된 코드를 다시 등록해도 추첨에서 제외됩니다.</p>
+<label for="file">쿠폰 파일 선택 (.txt 또는 coupon-codes.js)</label>
+<input id="file" type="file" accept=".txt,.js,text/plain,text/javascript">
+<label for="codes">또는 한 줄에 코드 하나씩 붙여 넣기</label>
+<textarea id="codes" spellcheck="false" autocomplete="off"></textarea>
+<button id="import">이 브라우저에 쿠폰 추가</button>
+<p id="status" role="status"></p>
+<a href="./">게임 열기</a>
+<script>
+const chanceKey = "lake.coupon-chance.v1";
+const chanceInput = document.getElementById("chance");
+const chanceStatus = document.getElementById("chance-status");
+
+function loadChance() {
+  try {
+    const saved = localStorage.getItem(chanceKey);
+    const chance = saved !== null && saved.trim() ? Number(saved) : NaN;
+    const valid = Number.isFinite(chance) && chance >= 0 && chance <= 1;
+    const percent = Number(((valid ? chance : 0.33) * 100).toFixed(10));
+    chanceInput.value = percent;
+    chanceStatus.textContent = "현재 적용 확률 " + percent + "%" + (valid ? "" : " (기본값)");
+  } catch {
+    chanceStatus.textContent = "저장된 확률을 읽지 못했어요. 게임은 기본값 33%를 사용합니다.";
+  }
+}
+document.getElementById("chance-form").addEventListener("submit", event => {
+  event.preventDefault();
+  if (!event.currentTarget.reportValidity()) return;
+  const percent = chanceInput.valueAsNumber;
+  if (!Number.isFinite(percent) || percent < 0 || percent > 100) return;
+  try {
+    localStorage.setItem(chanceKey, String(percent / 100));
+    chanceStatus.textContent = percent + "%로 저장했어요. 다음 추첨부터 적용됩니다.";
+  } catch {
+    chanceStatus.textContent = "확률을 저장하지 못했어요. 브라우저 저장 공간 설정을 확인하세요.";
+  }
+});
+window.addEventListener("storage", event => {
+  if (event.key === chanceKey || event.key === null) loadChance();
+});
+loadChance();
+
+const inventoryKey = "lake.coupon-inventory.v1";
+const issuedKey = "lake.coupon-list.v1";
+const status = document.getElementById("status");
+function readList(key) {
+  const data = JSON.parse(localStorage.getItem(key) || "[]");
+  if (!Array.isArray(data) || !data.every(code => typeof code === "string")) throw new Error();
+  return data;
+}
+function showCount() {
+  const issuedState = JSON.parse(localStorage.getItem(issuedKey) || '{"codes":[]}');
+  if (!Array.isArray(issuedState.codes)) throw new Error();
+  const issued = new Set(issuedState.codes);
+  const available = new Set(readList(inventoryKey).filter(code => code && !issued.has(code)));
+  status.textContent = "이 브라우저에서 사용 가능한 쿠폰 " + available.size + "개";
+}
+document.getElementById("file").addEventListener("change", async event => {
+  const file = event.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const match = text.match(/window\.LAKE_COUPON_CODES\s*=\s*`([\s\S]*?)`/);
+    if (file.name.endsWith(".js") && !match) throw new Error();
+    document.getElementById("codes").value = match ? match[1] : text;
+    status.textContent = "내용을 확인한 뒤 쿠폰 추가 버튼을 누르세요.";
+  } catch { status.textContent = "파일을 읽지 못했어요. 텍스트 목록을 직접 붙여 넣어 주세요."; }
+});
+document.getElementById("import").addEventListener("click", async () => {
+  if (!navigator.locks) {
+    status.textContent = "HTTPS 또는 localhost 주소에서 등록 페이지를 열어 주세요.";
+    return;
+  }
+  const codes = [...new Set(document.getElementById("codes").value.split(/\r?\n/).map(code => code.trim()).filter(Boolean))];
+  if (!codes.length) { status.textContent = "쿠폰 코드를 먼저 입력하세요."; return; }
+  try {
+    await navigator.locks.request("lake-coupon-issuance", () => {
+      const issuedState = JSON.parse(localStorage.getItem(issuedKey) || '{"codes":[]}');
+      if (!Array.isArray(issuedState.codes)) throw new Error();
+      const issued = new Set(issuedState.codes);
+      const inventory = [...new Set([...readList(inventoryKey), ...codes])].filter(code => !issued.has(code));
+      localStorage.setItem(inventoryKey, JSON.stringify(inventory));
+    });
+    document.getElementById("codes").value = "";
+    document.getElementById("file").value = "";
+    showCount();
+  } catch { status.textContent = "저장하지 못했어요. 브라우저 저장 공간과 기존 쿠폰 데이터를 확인하세요."; }
+});
+try { showCount(); } catch { status.textContent = "기존 쿠폰 데이터를 읽지 못했어요. 데이터를 확인하세요."; }
+</script>
+</body>
+</html>
